@@ -1,0 +1,6 @@
+{
+  "name": "Lift",
+  "description": "Travel Together, Save More. A modern, sustainable carpooling platform for neighbors and commuters to share rides, chat, and save on transit costs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "lift",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Lift carpooling app with a React frontend and Node.js/Express backend.",
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace backend\" \"npm run dev --workspace frontend\"",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "build": "npm run build --workspace frontend",
+    "start": "npm run start --workspace backend",
+    "lint": "npm run lint --workspace frontend",
+    "clean": "rimraf frontend/dist backend/dist"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "rimraf": "^6.0.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

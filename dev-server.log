@@ -1,0 +1,28 @@
+
+> lift@0.1.0 dev
+> concurrently "npm run dev --workspace backend" "npm run dev --workspace frontend"
+
+[1] 
+[1] > @lift/frontend@0.1.0 dev
+[1] > vite
+[1] 
+[0] 
+[0] > @lift/backend@0.1.0 dev
+[0] > node --watch src/server.js
+[0] 
+[0] (node:12976) ExperimentalWarning: Watch mode is an experimental feature and might change at any time
+[0] (Use `node --trace-warnings ...` to show where the warning was created)
+[0] ◇ injected env (0) from ..\..\.env // tip: ⌘ suppress logs { quiet: true }
+[0] ◇ injected env (7) from ..\.env // tip: ⌘ enable debugging { debug: true }
+[0] Lift API listening at http://0.0.0.0:3010
+[1] 
+[1]   [32m[1mVITE[22m v6.4.3[39m  [2mready in [0m[1m2090[22m[2m[0m ms[22m
+[1] 
+[1]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5172[22m/[39m
+[1]   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.29.26:[1m5172[22m/[39m
+[1]   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.25.64.1:[1m5172[22m/[39m
+[0] Restarting 'src/server.js'
+[0] ◇ injected env (7) from ..\.env // tip: ⌘ suppress logs { quiet: true }
+[0] ◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+[0] Lift API listening at http://0.0.0.0:3010
+[0] [0mGET /api/health [32m200[0m 8.663 ms - 74[0m
