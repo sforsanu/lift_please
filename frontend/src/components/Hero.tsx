@@ -1,4 +1,4 @@
-import { ArrowRight, Leaf } from 'lucide-react';
+import { ArrowRight, Leaf, ShieldCheck, Sparkles, MapPin, Zap, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface HeroProps {
@@ -16,159 +16,194 @@ export default function Hero({ onFindRideClick, onListTripClick }: HeroProps) {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-white pt-12 pb-16 md:py-24">
-      {/* Decorative background grid/gradients */}
-      <div className="absolute inset-0 bg-[radial-gradient(#e0e7ff_1px,transparent_1px)] [background-size:16px_16px] opacity-40"></div>
-      <div className="absolute -top-40 right-0 w-96 h-96 bg-brand-blue/5 rounded-full blur-3xl"></div>
+    <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 text-white pt-14 pb-20 md:py-28">
       
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left">
-        <div className="grid md:grid-cols-12 gap-12 items-center">
+      {/* Decorative animated background mesh & glowing orbs */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/30 via-slate-950/60 to-slate-950"></div>
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-brand-blue/30 rounded-full blur-[120px] pointer-events-none animate-pulse-glow"></div>
+      <div className="absolute top-1/3 -right-20 w-96 h-96 bg-emerald-500/20 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+
+      {/* Subtle SVG Grid overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-25"></div>
+      
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid md:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          {/* Hero text */}
+          {/* Hero Content Column */}
           <div className="md:col-span-7 flex flex-col items-center md:items-start text-center md:text-left space-y-6">
             
-            {/* Green Badge */}
+            {/* Live Green Innovation Badge */}
             <motion.div 
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center space-x-1.5 bg-[#d1fae5] text-brand-green px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase shadow-sm"
+              className="inline-flex items-center space-x-2 bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 px-4 py-2 rounded-full text-xs font-extrabold tracking-wide uppercase shadow-lg shadow-emerald-900/20 backdrop-blur-md"
             >
-              <Leaf className="h-3.5 w-3.5 animate-pulse" />
-              <span>New: Carbon Tracker Enabled</span>
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <Leaf className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Zero-Emissions Community Carpooling</span>
             </motion.div>
 
-            {/* Headline */}
+            {/* Main Headline */}
             <motion.h1 
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1]"
             >
               Travel Together, <br />
-              <span className="text-brand-blue font-black drop-shadow-sm">Save More.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400 drop-shadow-md">
+                Save Costs & CO₂.
+              </span>
             </motion.h1>
 
             {/* Description */}
             <motion.p 
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg md:text-xl text-gray-600 max-w-xl font-normal leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-slate-300 max-w-xl font-medium leading-relaxed"
             >
-              Join the green mobility revolution. Lift connects you with trustworthy neighbors heading your way. Reduce emissions, build community, and travel completely free.
+              Join thousands of daily commuters sharing routes across your region. Verified drivers, encrypted instant messaging, and zero fare commissions.
             </motion.p>
 
-            {/* Interactive CTAs */}
+            {/* Call to Action Buttons */}
             <motion.div 
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
               className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto pt-2"
             >
               <button
                 onClick={onFindRideClick}
-                className="flex items-center justify-center space-x-2 bg-brand-blue hover:bg-brand-blue-hover text-white px-8 py-4 rounded-full font-bold text-base shadow-lg shadow-brand-blue/20 w-full sm:w-auto hover:translate-x-1 transition-transform cursor-pointer"
+                className="group flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-4 rounded-2xl font-bold text-base shadow-xl shadow-blue-600/30 w-full sm:w-auto transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer border border-blue-400/30"
               >
                 <span>Find My Ride</span>
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
               
               <button
                 onClick={onListTripClick}
-                className="flex items-center justify-center border-2 border-brand-blue text-brand-blue hover:bg-brand-blue/5 px-8 py-4 rounded-full font-bold text-base w-full sm:w-auto transition-colors cursor-pointer"
+                className="flex items-center justify-center bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700/80 px-8 py-4 rounded-2xl font-bold text-base w-full sm:w-auto transition-all cursor-pointer backdrop-blur-md shadow-lg"
               >
-                <span>List Your Trip</span>
+                <Zap className="h-4 w-4 text-amber-400 mr-2" />
+                <span>Offer a Ride</span>
               </button>
             </motion.div>
 
-            {/* Social Proof */}
+            {/* Social Proof Bar */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex items-center space-x-3 pt-4"
+              className="flex items-center space-x-4 pt-6 border-t border-slate-800/80 w-full max-w-md justify-center md:justify-start"
             >
-              <div className="flex -space-x-2.5">
+              <div className="flex -space-x-3">
                 {travelers.map((src, i) => (
                   <img
                     key={i}
                     src={src}
                     alt="Active traveler"
-                    className="h-9 w-9 rounded-full border-2 border-white object-cover"
+                    className="h-10 w-10 rounded-full border-2 border-slate-900 object-cover shadow-md"
                     referrerPolicy="no-referrer"
                   />
                 ))}
               </div>
-              <p className="text-sm font-semibold text-gray-600">
-                <span className="text-brand-blue font-bold">50k+</span> active travelers this week
-              </p>
+              <div className="text-left text-xs font-semibold text-slate-300">
+                <p className="flex items-center gap-1 text-amber-400 font-bold">
+                  <Star className="h-3.5 w-3.5 fill-current" /> 4.9/5 Rating
+                </p>
+                <p className="text-slate-400">Over <strong className="text-white font-bold">50,000+</strong> active monthly rides</p>
+              </div>
             </motion.div>
 
           </div>
 
-          {/* Right graphics or mockup visualization */}
+          {/* Right Column: Dynamic Route Interactive Hero Graphic */}
           <div className="md:col-span-5 hidden md:flex items-center justify-center">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative w-full max-w-sm"
+              className="relative w-full max-w-md"
             >
-              {/* Dynamic floating badge */}
-              <div className="absolute -top-6 -left-6 bg-white border border-gray-100 p-3.5 rounded-2xl shadow-xl flex items-center space-x-3 z-10 animate-bounce">
-                <div className="p-2 bg-[#d1fae5] rounded-full text-brand-green">
-                  <Leaf className="h-5 w-5" />
+              {/* Floating Eco Badge */}
+              <div className="absolute -top-7 -left-7 bg-slate-900/90 border border-emerald-500/40 p-4 rounded-2xl shadow-2xl flex items-center space-x-3.5 z-20 backdrop-blur-xl animate-float-slow">
+                <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+                  <Leaf className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 font-medium">CO2 Saved Today</p>
-                  <p className="text-sm font-bold text-brand-green">14.5 kg CO₂</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Carbon Offset Today</p>
+                  <p className="text-base font-black text-emerald-400">14.5 kg CO₂ Saved</p>
                 </div>
               </div>
 
-              {/* Decorative elements */}
-              <div className="absolute inset-0 bg-brand-blue/10 rounded-3xl transform rotate-3 scale-105"></div>
+              {/* Dynamic Glow aura behind main card */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-emerald-500 rounded-3xl blur-xl opacity-30 animate-pulse-glow"></div>
               
-              {/* Main vector representation of city route or carpool */}
-              <div className="relative bg-white border border-gray-100 p-6 rounded-3xl shadow-xl flex flex-col space-y-4">
-                <div className="h-48 bg-brand-blue/5 rounded-2xl relative overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 bg-[radial-gradient(#004ced_0.5px,transparent_0.5px)] [background-size:12px_12px] opacity-15"></div>
-                  {/* Visual routes */}
-                  <svg className="w-full h-full p-4" viewBox="0 0 200 100" fill="none">
-                    <path d="M20 80 C 80 20, 120 90, 180 30" stroke="#003ec7" strokeWidth="4" strokeLinecap="round" strokeDasharray="6,4" />
-                    <circle cx="20" cy="80" r="6" fill="#003ec7" />
-                    <circle cx="180" cy="30" r="6" fill="#006e2a" />
-                  </svg>
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] font-bold text-brand-blue flex items-center space-x-1 shadow-sm">
-                    <span className="w-2 h-2 rounded-full bg-brand-blue animate-ping"></span>
-                    <span>Route Matching...</span>
+              {/* Main Visual Route Container */}
+              <div className="relative bg-slate-900/90 border border-slate-800 p-6 rounded-3xl shadow-2xl backdrop-blur-xl space-y-5">
+                
+                {/* Visual Route Header */}
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <div className="flex items-center space-x-2.5">
+                    <img 
+                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80" 
+                      alt="Driver" 
+                      className="h-10 w-10 rounded-full object-cover border-2 border-blue-500" 
+                    />
+                    <div>
+                      <h4 className="text-xs font-bold text-white flex items-center gap-1">
+                        <span>Nishikanta Nayak</span>
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                      </h4>
+                      <p className="text-[10px] text-slate-400 font-semibold">Tesla Model Y (EV)</p>
+                    </div>
                   </div>
+                  <span className="text-[11px] font-extrabold text-blue-400 bg-blue-500/10 border border-blue-500/30 px-2.5 py-1 rounded-full">
+                    Active Match
+                  </span>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-xs text-gray-400 font-medium">
-                    <span>Driver Alex Mercer</span>
-                    <span className="text-brand-blue font-bold">100% Match</span>
+                {/* SVG Route Connector */}
+                <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden">
+                  <div className="flex items-center justify-between mb-3 text-xs font-extrabold">
+                    <span className="text-slate-300 flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-blue-400" /> Bhubaneswar
+                    </span>
+                    <span className="text-slate-400 font-mono text-[10px]">53.7 km</span>
+                    <span className="text-slate-300 flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-emerald-400" /> Puri
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">San Francisco</p>
-                      <p className="text-[11px] text-gray-400">08:30 AM</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-gray-400" />
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-gray-900">San Jose</p>
-                      <p className="text-[11px] text-gray-400">Tesla Model 3</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={onFindRideClick}
-                    className="w-full py-2 bg-brand-blue hover:bg-brand-blue-hover text-white rounded-xl font-bold text-xs shadow-sm transition-colors cursor-pointer"
-                  >
-                    View Matching Pool
-                  </button>
+
+                  <svg className="w-full h-10" viewBox="0 0 200 30" fill="none">
+                    <path d="M 10 15 Q 100 -5 190 15" stroke="#3b82f6" strokeWidth="3" strokeDasharray="6 4" />
+                    <circle cx="10" cy="15" r="5" fill="#3b82f6" />
+                    <circle cx="190" cy="15" r="5" fill="#10b981" />
+                  </svg>
                 </div>
+
+                {/* Info Footer Pill */}
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-400 font-medium">Seats: <strong className="text-white">4 of 5 open</strong></span>
+                  <span className="text-emerald-400 font-extrabold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                    Free Community Ride
+                  </span>
+                </div>
+
+                <button 
+                  onClick={onFindRideClick}
+                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer border border-blue-400/20"
+                >
+                  Join Matching Pool
+                </button>
               </div>
+
             </motion.div>
           </div>
 
@@ -177,3 +212,4 @@ export default function Hero({ onFindRideClick, onListTripClick }: HeroProps) {
     </section>
   );
 }
+

@@ -12,7 +12,7 @@ export default function CarbonDashboard({ onBackClick }: CarbonDashboardProps) {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/carbon-stats');
+      const res = await fetch('/api/carbon-stats', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setStats(data);

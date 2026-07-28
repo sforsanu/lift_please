@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Ride } from './types';
+import { AuthUser, LocationSelection, Ride } from './types';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Features from './components/Features';
@@ -15,6 +15,7 @@ import ChatDrawer from './components/ChatDrawer';
 import CarbonDashboard from './components/CarbonDashboard';
 import LoginModal from './components/LoginModal';
 import Footer from './components/Footer';
+import AuthenticatedDashboard from './components/AuthenticatedDashboard';
 import { motion, AnimatePresence } from 'motion/react';
 import { Info, Play, X, Leaf } from 'lucide-react';
 
@@ -22,34 +23,98 @@ export default function App() {
   const [rides, setRides] = useState<Ride[]>([]);
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'stats'>('home');
   const [joinedRideIds, setJoinedRideIds] = useState<string[]>([]);
+  const [userRequests, setUserRequests] = useState<Record<string, 'PENDING' | 'ACCEPTED' | 'REJECTED'>>({});
   const [selectedChatRide, setSelectedChatRide] = useState<Ride | null>(null);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [isWatchStoryOpen, setIsWatchStoryOpen] = useState(false);
   const [searchFeedback, setSearchFeedback] = useState('');
+  const [isExactMatchFound, setIsExactMatchFound] = useState<boolean>(true);
+  const [searchQueryInfo, setSearchQueryInfo] = useState<{ pickupAddress?: string; destinationAddress?: string; date?: string } | null>(null);
   
   // App Authentication state
-  const [currentUser, setCurrentUser] = useState<{ email: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Fetch all rides from backend on load
-  const fetchRides = async (filters?: { leavingFrom?: string; goingTo?: string; date?: string }) => {
+  const fetchRides = async (filters?: {
+    pickupLocation?: LocationSelection | null;
+    destinationLocation?: LocationSelection | null;
+    date?: string;
+    seatsAvailable?: number;
+    radiusKm?: number;
+  }) => {
     try {
       let url = '/api/rides';
-      if (filters) {
+      const hasFilters = Boolean(filters && (filters.pickupLocation || filters.destinationLocation || filters.date));
+      if (filters && hasFilters) {
         const params = new URLSearchParams();
-        if (filters.leavingFrom) params.append('leavingFrom', filters.leavingFrom);
-        if (filters.goingTo) params.append('goingTo', filters.goingTo);
+        if (filters.pickupLocation) {
+          params.append('pickupLatitude', String(filters.pickupLocation.latitude));
+          params.append('pickupLongitude', String(filters.pickupLocation.longitude));
+        }
+        if (filters.destinationLocation) {
+          params.append('destinationLatitude', String(filters.destinationLocation.latitude));
+          params.append('destinationLongitude', String(filters.destinationLocation.longitude));
+        }
         if (filters.date) params.append('date', filters.date);
+        if (filters.seatsAvailable) params.append('seatsAvailable', String(filters.seatsAvailable));
+        if (filters.radiusKm) params.append('radiusKm', String(filters.radiusKm));
         url += `?${params.toString()}`;
       }
-      
-      const res = await fetch(url);
+
+      const res = await fetch(url, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        setRides(data);
+        if (filters && hasFilters) {
+          setSearchQueryInfo({
+            pickupAddress: filters.pickupLocation?.address,
+            destinationAddress: filters.destinationLocation?.address,
+            date: filters.date,
+          });
+
+          if (Array.isArray(data) && data.length > 0) {
+            setIsExactMatchFound(true);
+            setRides(data);
+          } else {
+            // No exact matches found for specific date/coords!
+            setIsExactMatchFound(false);
+            // Fetch all active rides as fallback suggestions so UI is never empty
+            const fallbackRes = await fetch('/api/rides', { credentials: 'include' });
+            if (fallbackRes.ok) {
+              const fallbackData = await fallbackRes.json();
+              setRides(fallbackData);
+            }
+          }
+        } else {
+          setIsExactMatchFound(true);
+          setSearchQueryInfo(null);
+          setRides(data);
+        }
       }
     } catch (err) {
       console.error('Error fetching rides from Express backend:', err);
+    }
+  };
+
+  const fetchUserRequests = async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch('/api/rides/user-requests', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        const map: Record<string, 'PENDING' | 'ACCEPTED' | 'REJECTED'> = {};
+        const acceptedIds: string[] = [];
+        data.forEach((req: { rideId: string; status: 'PENDING' | 'ACCEPTED' | 'REJECTED' }) => {
+          map[req.rideId] = req.status;
+          if (req.status === 'ACCEPTED') {
+            acceptedIds.push(req.rideId);
+          }
+        });
+        setUserRequests(map);
+        setJoinedRideIds(acceptedIds);
+      }
+    } catch (err) {
+      console.error('Error fetching user requests:', err);
     }
   };
 
@@ -57,17 +122,44 @@ export default function App() {
     fetchRides();
   }, []);
 
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        }
+      } catch (err) {
+        console.error('Error restoring session:', err);
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserRequests();
+      const interval = setInterval(fetchUserRequests, 3000);
+      return () => clearInterval(interval);
+    } else {
+      setUserRequests({});
+      setJoinedRideIds([]);
+    }
+  }, [currentUser]);
+
   // Search Submit handler
-  const handleSearch = async (filters: { leavingFrom: string; goingTo: string; date: string }) => {
+  const handleSearch = async (filters: { pickupLocation: LocationSelection | null; destinationLocation: LocationSelection | null; date: string }) => {
     if (!currentUser) {
       setIsLoginModalOpen(true);
       return;
     }
     await fetchRides(filters);
     setActiveTab('search');
-    
-    if (filters.leavingFrom || filters.goingTo) {
-      setSearchFeedback(`Showing matches for "${filters.leavingFrom || 'Anywhere'}" to "${filters.goingTo || 'Anywhere'}"`);
+
+    if (filters.pickupLocation || filters.destinationLocation) {
+      setSearchFeedback(`Search results for "${filters.pickupLocation?.address || 'Anywhere'}" to "${filters.destinationLocation?.address || 'Anywhere'}"`);
     } else {
       setSearchFeedback('');
     }
@@ -79,18 +171,50 @@ export default function App() {
     }, 100);
   };
 
-  // Join Ride handler
-  const handleJoinRide = (ride: Ride) => {
+
+  // Join Ride / Send Request handler
+  const handleJoinRide = async (ride: Ride) => {
     if (!currentUser) {
       setIsLoginModalOpen(true);
       return;
     }
-    setJoinedRideIds((prev) => [...prev, ride.id]);
-    alert(`🎉 Success! You have joined ${ride.driverName}'s carpool pool. You can now chat securely to coordinate pickup!`);
+
+    try {
+      const res = await fetch(`/api/rides/${ride.id}/request`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUserRequests((prev) => ({ ...prev, [ride.id]: data.status }));
+        if (data.status === 'ACCEPTED') {
+          setJoinedRideIds((prev) => Array.from(new Set([...prev, ride.id])));
+        }
+        setSelectedChatRide(ride);
+      } else {
+        const err = await res.json().catch(() => null);
+        alert(err?.message || 'Failed to send ride request');
+      }
+    } catch (err) {
+      console.error('Error sending request:', err);
+    }
   };
 
   // Offer/List Ride Submit handler (Calls post backend route)
-  const handleOfferRide = async (rideData: Omit<Ride, 'id' | 'driverAvatar' | 'driverRating' | 'verifiedDriver' | 'carbonSaved'>) => {
+  const handleOfferRide = async (rideData: {
+    driverName: string;
+    pickupLocation: LocationSelection;
+    destinationLocation: LocationSelection;
+    date: string;
+    time: string;
+    price: number;
+    seatsAvailable: number;
+    totalSeats: number;
+    carModel: string;
+    interests: string[];
+    musicTaste: string[];
+  }) => {
     if (!currentUser) {
       setIsLoginModalOpen(true);
       return;
@@ -98,6 +222,7 @@ export default function App() {
     try {
       const res = await fetch('/api/rides', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -108,7 +233,8 @@ export default function App() {
         await fetchRides(); // Reload rides to include the new one
         alert('🚀 Ride published successfully to the community registry!');
       } else {
-        throw new Error('Failed to post ride to server');
+        const errorBody = await res.json().catch(() => null);
+        throw new Error(errorBody?.message || 'Failed to post ride to server');
       }
     } catch (err: any) {
       alert(`Error listing your ride: ${err.message}`);
@@ -136,6 +262,55 @@ export default function App() {
     }
   };
 
+  const handleSignOut = async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => undefined);
+    setCurrentUser(null);
+    setActiveTab('home');
+    setJoinedRideIds([]);
+    setUserRequests({});
+    setSelectedChatRide(null);
+  };
+
+  if (currentUser) {
+    return (
+      <div id="app-viewport" className="min-h-screen bg-surface-base">
+        <AuthenticatedDashboard
+          user={currentUser}
+          rides={rides}
+          joinedRideIds={joinedRideIds}
+          userRequests={userRequests}
+          onSearch={handleSearch}
+          onJoinRide={handleJoinRide}
+          onOpenChat={(ride) => setSelectedChatRide(ride)}
+          onOfferRideClick={() => setIsOfferModalOpen(true)}
+          onSignOut={handleSignOut}
+          isExactMatchFound={isExactMatchFound}
+          searchQueryInfo={searchQueryInfo}
+          onClearFilter={() => {
+            fetchRides();
+            setIsExactMatchFound(true);
+            setSearchQueryInfo(null);
+            setSearchFeedback('');
+          }}
+        />
+
+        {isOfferModalOpen && (
+          <OfferRideModal
+            onClose={() => setIsOfferModalOpen(false)}
+            onSubmit={handleOfferRide}
+          />
+        )}
+
+        {selectedChatRide && (
+          <ChatDrawer
+            ride={selectedChatRide}
+            onClose={() => setSelectedChatRide(null)}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div id="app-viewport" className="min-h-screen bg-surface-base flex flex-col justify-between">
       
@@ -157,9 +332,8 @@ export default function App() {
         activeTab={activeTab}
         currentUser={currentUser}
         onSignInClick={() => setIsLoginModalOpen(true)}
-        onSignOut={() => {
-          setCurrentUser(null);
-          setActiveTab('home');
+        onSignOut={async () => {
+          await handleSignOut();
         }}
       />
 
@@ -206,11 +380,13 @@ export default function App() {
               {/* Search Results / Matching Pools anchor */}
               <div id="search-results-anchor" className="scroll-mt-20">
                 {searchFeedback && (
-                  <div className="max-w-4xl mx-auto px-6 py-2.5 bg-brand-blue/5 text-brand-blue border border-brand-blue/10 rounded-2xl text-xs font-bold flex items-center justify-between">
+                  <div className="max-w-4xl mx-auto px-6 py-2.5 bg-brand-blue/5 text-brand-blue border border-brand-blue/10 rounded-2xl text-xs font-bold flex items-center justify-between mb-4">
                     <span>{searchFeedback}</span>
                     <button 
                       onClick={() => {
                         fetchRides();
+                        setIsExactMatchFound(true);
+                        setSearchQueryInfo(null);
                         setSearchFeedback('');
                       }} 
                       className="text-gray-400 hover:text-gray-600 font-extrabold cursor-pointer"
@@ -225,8 +401,19 @@ export default function App() {
                   onJoinRide={handleJoinRide}
                   onOpenChat={(ride) => setSelectedChatRide(ride)}
                   joinedRideIds={joinedRideIds}
+                  userRequests={userRequests}
+                  currentUserId={currentUser?.id}
                   isGuest={!currentUser}
                   onPromptLogin={() => setIsLoginModalOpen(true)}
+                  isExactMatchFound={isExactMatchFound}
+                  searchQueryInfo={searchQueryInfo}
+                  onOfferRideClick={() => setIsOfferModalOpen(true)}
+                  onClearFilter={() => {
+                    fetchRides();
+                    setIsExactMatchFound(true);
+                    setSearchQueryInfo(null);
+                    setSearchFeedback('');
+                  }}
                 />
               </div>
 
@@ -327,8 +514,8 @@ export default function App() {
       {isLoginModalOpen && (
         <LoginModal
           onClose={() => setIsLoginModalOpen(false)}
-          onLoginSuccess={(email) => {
-            setCurrentUser({ email });
+          onLoginSuccess={(user) => {
+            setCurrentUser(user);
             setIsLoginModalOpen(false);
           }}
         />

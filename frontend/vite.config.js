@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
   const frontendPort = Number(env.VITE_FRONTEND_PORT || env.FRONTEND_PORT || 5173);
 
   return {
+    envDir: rootDir,
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

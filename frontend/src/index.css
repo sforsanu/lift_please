@@ -1,29 +1,88 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-brand-blue: #003ec7;
-  --color-brand-blue-hover: #002da2;
-  --color-brand-blue-light: #0052ff;
-  --color-brand-blue-container: #dfe3ff;
-  --color-brand-green: #006e2a;
-  --color-brand-green-light: #5cfd80;
-  --color-brand-gold: #6c4600;
-  --color-brand-gold-container: #ffe0b9;
-  --color-road-grey: #1a1c1e;
-  --color-surface-base: #f9f9fc;
+  --color-brand-blue: #004ced;
+  --color-brand-blue-hover: #0036b5;
+  --color-brand-blue-light: #3b82f6;
+  --color-brand-blue-container: #dbeafe;
+  --color-brand-green: #059669;
+  --color-brand-green-light: #10b981;
+  --color-brand-gold: #d97706;
+  --color-brand-gold-container: #fef3c7;
+  --color-road-grey: #0f172a;
+  --color-surface-base: #f8fafc;
 }
 
 body {
   font-family: var(--font-sans);
   background-color: var(--color-surface-base);
   color: var(--color-road-grey);
+  overflow-x: hidden;
 }
 
-/* Custom scrollbar to keep layout premium */
+/* Glassmorphism & Custom Utility Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.glass-panel-dark {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 76, 237, 0.08), 0 8px 10px -6px rgba(0, 76, 237, 0.04);
+  border-color: rgba(0, 76, 237, 0.2);
+}
+
+/* Animations */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+.shimmer-bg {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -38,3 +97,35 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Google Places Autocomplete dropdown */
+.pac-container {
+  z-index: 99999 !important;
+  border-radius: 1.25rem !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+  font-family: var(--font-sans) !important;
+  margin-top: 6px !important;
+  padding: 6px 0 !important;
+}
+
+.pac-item {
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+}
+
+.pac-item:hover, .pac-item-selected {
+  background-color: #eff6ff !important;
+  color: #004ced !important;
+}
+
+input.pac-target-input,
+input[data-google-places="true"],
+.pac-target-input {
+  background-image: none !important;
+}
+
+

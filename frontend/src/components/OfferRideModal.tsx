@@ -1,30 +1,50 @@
 import React, { useState } from 'react';
-import { X, Car, Calendar, MapPin, Flag, User, Clock } from 'lucide-react';
+import { X, Car, Calendar, MapPin, Flag, User, Clock, Bike, Zap, Shield, Palette, Navigation } from 'lucide-react';
+import type { LocationSelection } from '../types';
+import GooglePlacesInput from './GooglePlacesInput';
+import { calculateDistanceKm } from '../utils/googlePlaces';
 
 interface OfferRideModalProps {
   onClose: () => void;
   onSubmit: (rideData: {
     driverName: string;
-    leavingFrom: string;
-    goingTo: string;
+    pickupLocation: LocationSelection;
+    destinationLocation: LocationSelection;
     date: string;
     time: string;
     price: number;
     seatsAvailable: number;
     totalSeats: number;
     carModel: string;
+    vehicleType?: 'car' | 'bike' | 'ev';
+    vehicleModel?: string;
+    vehicleNumber?: string;
+    vehicleColor?: string;
     interests: string[];
     musicTaste: string[];
   }) => Promise<void>;
 }
 
+const VEHICLE_PRESETS = {
+  car: ['Toyota Prius', 'Tesla Model 3', 'Hyundai Creta', 'Honda City', 'Maruti Swift', 'Other Car Model...'],
+  bike: ['Royal Enfield Classic 350', 'Honda Shine', 'Yamaha FZ', 'TVS Apache', 'Hero Splendor', 'Other Bike Model...'],
+  ev: ['Tesla Model Y', 'Tata Nexon EV', 'MG ZS EV', 'Ather 450X', 'Ola S1 Pro', 'Other EV Model...'],
+};
+
 export default function OfferRideModal({ onClose, onSubmit }: OfferRideModalProps) {
   const [driverName, setDriverName] = useState('');
-  const [leavingFrom, setLeavingFrom] = useState('');
-  const [goingTo, setGoingTo] = useState('');
+  const [pickupLocation, setPickupLocation] = useState<LocationSelection | null>(null);
+  const [destinationLocation, setDestinationLocation] = useState<LocationSelection | null>(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [carModel, setCarModel] = useState('');
+  
+  // Vehicle Details state
+  const [vehicleType, setVehicleType] = useState<'car' | 'bike' | 'ev'>('car');
+  const [selectedModelPreset, setSelectedModelPreset] = useState<string>('Toyota Prius');
+  const [customModel, setCustomModel] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState('');
+  const [vehicleColor, setVehicleColor] = useState('');
+
   const [seatsAvailable, setSeatsAvailable] = useState('3');
   const [musicTaste, setMusicTaste] = useState('');
   const [interests, setInterests] = useState('');
@@ -33,7 +53,7 @@ export default function OfferRideModal({ onClose, onSubmit }: OfferRideModalProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!driverName || !leavingFrom || !goingTo || !date || !time) {
+    if (!driverName || !pickupLocation || !destinationLocation || !date || !time) {
       setError('Please fill in all required fields');
       return;
     }
@@ -45,18 +65,26 @@ export default function OfferRideModal({ onClose, onSubmit }: OfferRideModalProp
       const interestsArray = interests.split(',').map(s => s.trim()).filter(Boolean);
       const musicArray = musicTaste.split(',').map(s => s.trim()).filter(Boolean);
 
+      const finalModel = selectedModelPreset.startsWith('Other') || customModel
+        ? (customModel.trim() || 'Custom Vehicle')
+        : selectedModelPreset;
+
       await onSubmit({
         driverName,
-        leavingFrom,
-        goingTo,
+        pickupLocation,
+        destinationLocation,
         date,
         time,
         price: 0, // Lift campaign is 100% Free Forever
         seatsAvailable: Number(seatsAvailable),
         totalSeats: Number(seatsAvailable) + 1,
-        carModel: carModel || "Standard Hybrid",
-        interests: interestsArray.length > 0 ? interestsArray : ["Commuting"],
-        musicTaste: musicArray.length > 0 ? musicArray : ["Pop"]
+        carModel: finalModel,
+        vehicleType,
+        vehicleModel: finalModel,
+        vehicleNumber: vehicleNumber.trim() || undefined,
+        vehicleColor: vehicleColor.trim() || undefined,
+        interests: interestsArray.length > 0 ? interestsArray : ['Commuting'],
+        musicTaste: musicArray.length > 0 ? musicArray : ['Pop']
       });
 
       onClose();
@@ -105,7 +133,7 @@ export default function OfferRideModal({ onClose, onSubmit }: OfferRideModalProp
               <input
                 type="text"
                 required
-                placeholder="Alex Mercer"
+                placeholder="Nishikanta Nayak"
                 value={driverName}
                 onChange={(e) => setDriverName(e.target.value)}
                 className="block w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-brand-blue focus:bg-white transition-all"
@@ -115,44 +143,44 @@ export default function OfferRideModal({ onClose, onSubmit }: OfferRideModalProp
 
           {/* Origin & Destination */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                Leaving From *
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <MapPin className="h-4 w-4" />
-                </span>
-                <input
-                  type="text"
-                  required
-                  placeholder="San Francisco, CA"
-                  value={leavingFrom}
-                  onChange={(e) => setLeavingFrom(e.target.value)}
-                  className="block w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-brand-blue focus:bg-white transition-all"
-                />
-              </div>
-            </div>
+            <GooglePlacesInput
+              label="Leaving From *"
+              placeholder="e.g. Bhubaneswar"
+              value={pickupLocation}
+              onChange={setPickupLocation}
+              icon={MapPin}
+              compact
+            />
 
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                Going To *
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <Flag className="h-4 w-4" />
-                </span>
-                <input
-                  type="text"
-                  required
-                  placeholder="San Jose, CA"
-                  value={goingTo}
-                  onChange={(e) => setGoingTo(e.target.value)}
-                  className="block w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-brand-blue focus:bg-white transition-all"
-                />
-              </div>
-            </div>
+            <GooglePlacesInput
+              label="Going To *"
+              placeholder="e.g. Puri"
+              value={destinationLocation}
+              onChange={setDestinationLocation}
+              icon={Flag}
+              compact
+            />
           </div>
+
+          {/* Distance Preview Badge */}
+          {pickupLocation && destinationLocation && (
+            <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-3.5 flex items-center justify-between shadow-2xs">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 bg-brand-blue text-white rounded-xl">
+                  <Navigation className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Estimated Trip Distance</p>
+                  <p className="text-sm font-extrabold text-brand-blue">
+                    {calculateDistanceKm(pickupLocation, destinationLocation)} km total route
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-brand-green bg-emerald-100/60 px-2.5 py-1 rounded-full border border-emerald-200">
+                Direct Route
+              </span>
+            </div>
+          )}
 
           {/* Date & Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -185,7 +213,6 @@ export default function OfferRideModal({ onClose, onSubmit }: OfferRideModalProp
                 <input
                   type="time"
                   required
-                  placeholder="08:30"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
                   className="block w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-brand-blue focus:bg-white transition-all"
@@ -194,41 +221,155 @@ export default function OfferRideModal({ onClose, onSubmit }: OfferRideModalProp
             </div>
           </div>
 
-          {/* Car & Seats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Vehicle Section */}
+          <div className="border border-gray-100 bg-gray-50/70 p-4 rounded-2xl space-y-3">
+            <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider flex items-center space-x-1.5">
+              <Car className="h-4 w-4 text-brand-blue" />
+              <span>Vehicle Details</span>
+            </label>
+
+            {/* Vehicle Type Tabs / Selector */}
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                Car Model
+              <label className="block text-[11px] font-bold text-gray-500 mb-1">
+                Vehicle Category *
               </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <Car className="h-4 w-4" />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Tesla Model 3 (EV)"
-                  value={carModel}
-                  onChange={(e) => setCarModel(e.target.value)}
-                  className="block w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-brand-blue focus:bg-white transition-all"
-                />
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVehicleType('car');
+                    setSelectedModelPreset(VEHICLE_PRESETS.car[0]);
+                  }}
+                  className={`h-10 rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition-all cursor-pointer border ${
+                    vehicleType === 'car'
+                      ? 'bg-brand-blue text-white border-brand-blue shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  <Car className="h-3.5 w-3.5" />
+                  <span>Car</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVehicleType('bike');
+                    setSelectedModelPreset(VEHICLE_PRESETS.bike[0]);
+                    setSeatsAvailable('1');
+                  }}
+                  className={`h-10 rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition-all cursor-pointer border ${
+                    vehicleType === 'bike'
+                      ? 'bg-brand-blue text-white border-brand-blue shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  <Bike className="h-3.5 w-3.5" />
+                  <span>Bike</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVehicleType('ev');
+                    setSelectedModelPreset(VEHICLE_PRESETS.ev[0]);
+                  }}
+                  className={`h-10 rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition-all cursor-pointer border ${
+                    vehicleType === 'ev'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  <Zap className="h-3.5 w-3.5 text-amber-300" />
+                  <span>Electric</span>
+                </button>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                Seats Available
-              </label>
-              <select
-                value={seatsAvailable}
-                onChange={(e) => setSeatsAvailable(e.target.value)}
-                className="block w-full h-11 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-brand-blue focus:bg-white transition-all"
-              >
-                <option value="1">1 Seat</option>
-                <option value="2">2 Seats</option>
-                <option value="3">3 Seats</option>
-                <option value="4">4 Seats</option>
-                <option value="5">5 Seats</option>
-              </select>
+            {/* Vehicle Model Dropdown + Custom Field */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-1">
+                  Vehicle Model *
+                </label>
+                <select
+                  value={selectedModelPreset}
+                  onChange={(e) => setSelectedModelPreset(e.target.value)}
+                  className="block w-full h-10 px-3 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-brand-blue"
+                >
+                  {VEHICLE_PRESETS[vehicleType].map((model) => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {(selectedModelPreset.startsWith('Other') || customModel) ? (
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">
+                    Custom Model Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Honda Civic"
+                    value={customModel}
+                    onChange={(e) => setCustomModel(e.target.value)}
+                    className="block w-full h-10 px-3 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-blue"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1">
+                    Seats Available
+                  </label>
+                  <select
+                    value={seatsAvailable}
+                    onChange={(e) => setSeatsAvailable(e.target.value)}
+                    className="block w-full h-10 px-3 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:border-brand-blue"
+                  >
+                    <option value="1">1 Seat</option>
+                    {vehicleType !== 'bike' && (
+                      <>
+                        <option value="2">2 Seats</option>
+                        <option value="3">3 Seats</option>
+                        <option value="4">4 Seats</option>
+                        <option value="5">5 Seats</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Additional Vehicle Specs (Registration Plate & Color) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-1 flex items-center space-x-1">
+                  <Shield className="h-3 w-3 text-gray-400" />
+                  <span>License Plate No. (Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. OD 02 AB 1234"
+                  value={vehicleNumber}
+                  onChange={(e) => setVehicleNumber(e.target.value)}
+                  className="block w-full h-10 px-3 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-blue"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-gray-500 mb-1 flex items-center space-x-1">
+                  <Palette className="h-3 w-3 text-gray-400" />
+                  <span>Vehicle Color (Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Metallic Black"
+                  value={vehicleColor}
+                  onChange={(e) => setVehicleColor(e.target.value)}
+                  className="block w-full h-10 px-3 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-blue"
+                />
+              </div>
             </div>
           </div>
 
@@ -279,3 +420,4 @@ export default function OfferRideModal({ onClose, onSubmit }: OfferRideModalProp
     </div>
   );
 }
+

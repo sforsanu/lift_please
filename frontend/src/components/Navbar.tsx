@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Car, Menu, X, Leaf, LogOut, User } from 'lucide-react';
+import { Car, Menu, X, Leaf, LogOut, User, Sparkles } from 'lucide-react';
 
 interface NavbarProps {
   onFindRideClick: () => void;
@@ -23,40 +23,50 @@ export default function Navbar({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100">
+    <nav className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          {/* Logo */}
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="p-2 bg-brand-blue rounded-lg text-white">
-              <Car className="h-6 w-6" />
+          
+          {/* Brand Logo with Glow */}
+          <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="relative p-2 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl text-white shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+              <Car className="h-5 w-5" />
             </div>
-            <span className="font-sans font-extrabold text-2xl tracking-tight text-brand-blue">Lift</span>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-xl tracking-tight text-white flex items-center gap-1">
+                Lift <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+              </span>
+              <span className="text-[9px] font-bold tracking-widest uppercase text-blue-400/80">Green Commute</span>
+            </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Desktop Navigation Pills */}
+          <div className="hidden md:flex items-center space-x-2 bg-slate-900/90 p-1.5 rounded-full border border-slate-800/80 shadow-inner">
             <button 
               onClick={onFindRideClick}
-              className={`font-sans font-semibold text-sm transition-colors ${
-                activeTab === 'search' ? 'text-brand-blue' : 'text-gray-600 hover:text-brand-blue'
+              className={`px-4 py-2 rounded-full font-bold text-xs transition-all cursor-pointer ${
+                activeTab === 'search' 
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' 
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               Find a Ride
             </button>
             <button 
               onClick={onListTripClick}
-              className="font-sans font-semibold text-sm text-gray-600 hover:text-brand-blue transition-colors"
+              className="px-4 py-2 rounded-full font-bold text-xs text-slate-300 hover:text-white hover:bg-slate-800/60 transition-all cursor-pointer"
             >
               Offer a Ride
             </button>
             <button 
               onClick={onShowStatsClick}
-              className={`flex items-center space-x-1.5 font-sans font-semibold text-sm transition-colors ${
-                activeTab === 'stats' ? 'text-brand-green' : 'text-gray-600 hover:text-brand-green'
+              className={`flex items-center space-x-1.5 px-4 py-2 rounded-full font-bold text-xs transition-all cursor-pointer ${
+                activeTab === 'stats' 
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' 
+                  : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800/60'
               }`}
             >
-              <Leaf className="h-4 w-4 text-brand-green" />
+              <Leaf className="h-3.5 w-3.5 text-emerald-400" />
               <span>Carbon Dashboard</span>
             </button>
           </div>
@@ -64,28 +74,28 @@ export default function Navbar({
           {/* CTA & User Profile Controls */}
           <div className="hidden md:flex items-center space-x-4">
             {currentUser ? (
-              <div className="flex items-center space-x-3 bg-gray-50 border border-gray-100 px-4 py-1.5 rounded-full">
-                <div className="p-1.5 bg-brand-blue/10 text-brand-blue rounded-full">
-                  <User className="h-4 w-4" />
+              <div className="flex items-center space-x-3 bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full">
+                <div className="p-1.5 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
+                  <User className="h-3.5 w-3.5" />
                 </div>
                 <div className="text-left">
-                  <p className="text-xs font-black text-gray-700 leading-tight">Logged In</p>
-                  <p className="text-[10px] text-gray-400 font-medium leading-none max-w-[120px] truncate" title={currentUser.email}>
+                  <p className="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400 leading-tight">Member</p>
+                  <p className="text-[11px] text-slate-300 font-semibold leading-none max-w-[130px] truncate" title={currentUser.email}>
                     {currentUser.email}
                   </p>
                 </div>
                 <button 
                   onClick={onSignOut}
-                  className="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition-all cursor-pointer ml-1"
+                  className="p-1.5 text-slate-400 hover:text-red-400 rounded-full hover:bg-slate-800 transition-all cursor-pointer ml-1"
                   title="Sign Out"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (
               <button 
                 onClick={onSignInClick}
-                className="bg-brand-blue hover:bg-brand-blue-hover text-white px-6 py-2.5 rounded-full font-sans font-semibold text-sm shadow-md shadow-brand-blue/10 active:scale-95 transition-transform cursor-pointer"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-2 rounded-full font-extrabold text-xs shadow-lg shadow-blue-600/20 active:scale-95 transition-all cursor-pointer border border-blue-400/30"
               >
                 Sign In
               </button>
@@ -96,9 +106,9 @@ export default function Navbar({
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-brand-blue hover:bg-gray-100 focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-800 focus:outline-none"
             >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
@@ -106,13 +116,13 @@ export default function Navbar({
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-white border-b border-gray-100 py-4 px-4 space-y-3 transition-all duration-200">
+        <div className="md:hidden bg-slate-950 border-b border-slate-800 py-4 px-4 space-y-3">
           <button
             onClick={() => {
               onFindRideClick();
               setIsOpen(false);
             }}
-            className="block w-full text-left px-3 py-2 rounded-md text-base font-semibold text-gray-700 hover:text-brand-blue hover:bg-gray-50"
+            className="block w-full text-left px-3 py-2 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-slate-900"
           >
             Find a Ride
           </button>
@@ -121,7 +131,7 @@ export default function Navbar({
               onListTripClick();
               setIsOpen(false);
             }}
-            className="block w-full text-left px-3 py-2 rounded-md text-base font-semibold text-gray-700 hover:text-brand-blue hover:bg-gray-50"
+            className="block w-full text-left px-3 py-2 rounded-xl text-sm font-bold text-slate-200 hover:text-white hover:bg-slate-900"
           >
             Offer a Ride
           </button>
@@ -130,24 +140,24 @@ export default function Navbar({
               onShowStatsClick();
               setIsOpen(false);
             }}
-            className="flex items-center space-x-2 w-full text-left px-3 py-2 rounded-md text-base font-semibold text-gray-700 hover:text-brand-green hover:bg-gray-50"
+            className="flex items-center space-x-2 w-full text-left px-3 py-2 rounded-xl text-sm font-bold text-slate-200 hover:text-emerald-400 hover:bg-slate-900"
           >
-            <Leaf className="h-5 w-5 text-brand-green" />
+            <Leaf className="h-4 w-4 text-emerald-400" />
             <span>Carbon Dashboard</span>
           </button>
-          <div className="pt-2 border-t border-gray-100">
+          <div className="pt-2 border-t border-slate-800">
             {currentUser ? (
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800">
                 <div className="flex items-center space-x-2">
-                  <User className="h-4.5 w-4.5 text-brand-blue" />
-                  <span className="text-xs font-semibold text-gray-600 truncate max-w-[150px]">{currentUser.email}</span>
+                  <User className="h-4 w-4 text-blue-400" />
+                  <span className="text-xs font-semibold text-slate-300 truncate max-w-[150px]">{currentUser.email}</span>
                 </div>
                 <button 
                   onClick={() => {
                     if (onSignOut) onSignOut();
                     setIsOpen(false);
                   }}
-                  className="flex items-center space-x-1 text-xs font-bold text-red-500"
+                  className="flex items-center space-x-1 text-xs font-bold text-red-400"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
@@ -159,7 +169,7 @@ export default function Navbar({
                   if (onSignInClick) onSignInClick();
                   setIsOpen(false);
                 }}
-                className="block w-full text-center bg-brand-blue hover:bg-brand-blue-hover text-white px-4 py-2.5 rounded-full font-sans font-semibold text-sm"
+                className="block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-2.5 rounded-full font-bold text-xs shadow-md"
               >
                 Sign In
               </button>
@@ -170,3 +180,4 @@ export default function Navbar({
     </nav>
   );
 }
+
