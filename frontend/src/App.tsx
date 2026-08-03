@@ -231,13 +231,13 @@ export default function App() {
 
       if (res.ok) {
         await fetchRides(); // Reload rides to include the new one
-        alert('🚀 Ride published successfully to the community registry!');
       } else {
         const errorBody = await res.json().catch(() => null);
         throw new Error(errorBody?.message || 'Failed to post ride to server');
       }
     } catch (err: any) {
-      alert(`Error listing your ride: ${err.message}`);
+      console.error('Error listing ride:', err);
+      throw err;
     }
   };
 
@@ -271,6 +271,35 @@ export default function App() {
     setSelectedChatRide(null);
   };
 
+  const handleUpdateProfile = async (updatedData: {
+    name?: string;
+    avatarUrl?: string;
+    phone?: string;
+    addressLine?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    vehicleNumber?: string;
+    vehicleModel?: string;
+    vehicleFrontUrl?: string;
+    vehicleRearUrl?: string;
+    ownerSelfieUrl?: string;
+    bio?: string;
+    emergencyContact?: string;
+  }) => {
+    const res = await fetch('/api/auth/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to update profile');
+    }
+    const data = await res.json();
+    setCurrentUser(data.user);
+  };
+
   if (currentUser) {
     return (
       <div id="app-viewport" className="min-h-screen bg-surface-base">
@@ -284,6 +313,7 @@ export default function App() {
           onOpenChat={(ride) => setSelectedChatRide(ride)}
           onOfferRideClick={() => setIsOfferModalOpen(true)}
           onSignOut={handleSignOut}
+          onUpdateProfile={handleUpdateProfile}
           isExactMatchFound={isExactMatchFound}
           searchQueryInfo={searchQueryInfo}
           onClearFilter={() => {
@@ -313,17 +343,6 @@ export default function App() {
 
   return (
     <div id="app-viewport" className="min-h-screen bg-surface-base flex flex-col justify-between">
-      
-      {/* Top Banner Notice for Separation instructions */}
-      <div className="bg-brand-blue text-white px-4 py-3 text-center text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-2 border-b border-white/10 shadow-sm relative z-50">
-        <div className="flex items-center space-x-1">
-          <Info className="h-4.5 w-4.5" />
-          <span><strong>Dual Repo Architecture Ready!</strong> This workspace is pre-split into frontend/backend code.</span>
-        </div>
-        <span className="opacity-75 hidden sm:inline">|</span>
-        <span>Move <code>/backend</code> & <code>server.ts</code> to your backend repo, and <code>/src</code> to your frontend repo!</span>
-      </div>
-
       {/* Navigation */}
       <Navbar
         onFindRideClick={handleScrollToSearch}

@@ -12,7 +12,18 @@ function coordinatesAreClose(expected, actual) {
 export async function verifyGooglePlaceLocation(location, fieldName) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
-  if (!apiKey || !location.placeId || location.placeId.startsWith('custom_') || location.placeId.startsWith('place_')) {
+  if (
+    !apiKey ||
+    !location.placeId ||
+    location.placeId.startsWith('custom_') ||
+    location.placeId.startsWith('place_') ||
+    location.placeId.startsWith('osm_') ||
+    location.placeId.startsWith('photon_') ||
+    location.placeId.startsWith('poi_') ||
+    location.placeId.startsWith('gps_') ||
+    location.placeId.startsWith('legacy:') ||
+    !location.placeId.startsWith('ChIJ')
+  ) {
     return;
   }
 

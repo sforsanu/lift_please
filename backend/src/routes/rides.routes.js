@@ -47,7 +47,9 @@ router.get('/', async (req, res, next) => {
 
 router.get('/user-requests', authenticate, async (req, res, next) => {
   try {
-    const requests = await RideRequest.find({ requester: req.user._id });
+    const requests = await RideRequest.find({
+      $or: [{ requester: req.user._id }, { owner: req.user._id }],
+    });
     return res.json(
       requests.map((r) => ({
         id: r._id.toString(),
@@ -56,6 +58,31 @@ router.get('/user-requests', authenticate, async (req, res, next) => {
         createdAt: r.createdAt,
       })),
     );
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get('/user-conversations', authenticate, async (req, res, next) => {
+  try {
+    const requests = await RideRequest.find({
+      $or: [{ requester: req.user._id }, { owner: req.user._id }],
+    }).populate('ride');
+
+    const userRides = await Ride.find({ driver: req.user._id });
+    const map = new Map();
+
+    userRides.forEach((r) => {
+      map.set(r._id.toString(), serializeRide(r));
+    });
+
+    requests.forEach((reqItem) => {
+      if (reqItem.ride) {
+        map.set(reqItem.ride._id.toString(), serializeRide(reqItem.ride));
+      }
+    });
+
+    return res.json(Array.from(map.values()));
   } catch (error) {
     return next(error);
   }
@@ -239,6 +266,17 @@ router.patch('/requests/:requestId/status', authenticate, async (req, res, next)
     request.status = status;
     await request.save();
 
+    await Notification.create({
+      user: request.requester,
+      type: status === 'ACCEPTED' ? 'RIDE_ACCEPTED' : 'RIDE_REJECTED',
+      title: status === 'ACCEPTED' ? '⚡ Request Accepted!' : '❌ Request Declined',
+      message: status === 'ACCEPTED'
+        ? `Your task/ride request was accepted by the rider! Direct messaging active.`
+        : `Your task/ride request was declined by the rider.`,
+      ride: request.ride,
+      request: request._id,
+    });
+
     return res.json({
       id: request._id.toString(),
       status: request.status,
@@ -258,13 +296,12 @@ router.get('/:id/messages', authenticate, async (req, res, next) => {
     const isDriver = ride.driver.equals(req.user._id);
 
     if (!isDriver) {
-      const acceptedRequest = await RideRequest.findOne({
+      const existingRequest = await RideRequest.findOne({
         ride: ride._id,
         requester: req.user._id,
-        status: 'ACCEPTED',
       });
 
-      if (!acceptedRequest) {
+      if (!existingRequest) {
         return res.json([]);
       }
     }

@@ -168,6 +168,67 @@ router.get('/me', authenticate, (req, res) => {
   res.json({ user: serializeUser(req.user) });
 });
 
+router.put('/profile', authenticate, async (req, res, next) => {
+  try {
+    const {
+      name,
+      avatarUrl,
+      phone,
+      addressLine,
+      city,
+      state,
+      pincode,
+      vehicleNumber,
+      vehicleModel,
+      vehicleFrontUrl,
+      vehicleRearUrl,
+      ownerSelfieUrl,
+      bio,
+      emergencyContact,
+    } = req.body;
+
+    if (name && name.trim()) {
+      req.user.name = name.trim();
+    }
+    if (avatarUrl !== undefined) {
+      req.user.avatarUrl = avatarUrl.trim();
+    }
+
+    if (!req.user.profile) {
+      req.user.profile = {};
+    }
+
+    if (phone !== undefined) req.user.profile.phone = phone.trim();
+    if (addressLine !== undefined) req.user.profile.addressLine = addressLine.trim();
+    if (city !== undefined) req.user.profile.city = city.trim();
+    if (state !== undefined) req.user.profile.state = state.trim();
+    if (pincode !== undefined) req.user.profile.pincode = pincode.trim();
+    if (vehicleNumber !== undefined) req.user.profile.vehicleNumber = vehicleNumber.trim().toUpperCase();
+    if (vehicleModel !== undefined) req.user.profile.vehicleModel = vehicleModel.trim();
+    if (vehicleFrontUrl !== undefined) req.user.profile.vehicleFrontUrl = vehicleFrontUrl.trim();
+    if (vehicleRearUrl !== undefined) req.user.profile.vehicleRearUrl = vehicleRearUrl.trim();
+    if (ownerSelfieUrl !== undefined) req.user.profile.ownerSelfieUrl = ownerSelfieUrl.trim();
+    if (bio !== undefined) req.user.profile.bio = bio.trim();
+    if (emergencyContact !== undefined) req.user.profile.emergencyContact = emergencyContact.trim();
+
+    // Auto update verification badges based on security details supplied
+    if (req.user.profile.addressLine && req.user.profile.city) {
+      req.user.profile.locationVerified = true;
+    } else {
+      req.user.profile.locationVerified = false;
+    }
+
+    if (req.user.profile.vehicleNumber) {
+      req.user.profile.verifiedDriver = true;
+    }
+
+    await req.user.save();
+    return res.json({ user: serializeUser(req.user) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.post('/logout', (_req, res) => {
   clearSessionCookie(res);
   res.status(204).end();

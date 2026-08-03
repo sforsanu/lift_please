@@ -265,17 +265,17 @@ export default function ChatDrawer({ ride, onClose }: ChatDrawerProps) {
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-gray-50">
         {messages.map((msg) => {
-          const isUser = msg.sender === 'user';
+          const isMyOwnMessage = (isDriver && msg.sender === 'driver') || (!isDriver && msg.sender === 'user');
           return (
             <div
               key={msg.id}
-              className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+              className={`flex flex-col ${isMyOwnMessage ? 'items-end' : 'items-start'}`}
             >
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm font-medium shadow-sm leading-relaxed ${
-                  isUser
+                  isMyOwnMessage
                     ? 'bg-brand-blue text-white rounded-tr-none'
-                    : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
+                    : 'bg-white text-gray-900 rounded-tl-none border border-gray-200'
                 }`}
               >
                 {msg.text}

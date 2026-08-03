@@ -20,6 +20,13 @@ let rides = [
     musicTaste: ['Indie Rock', 'Synthwave', 'Ambient'],
     carbonSaved: 14.5,
     verifiedDriver: true,
+    recentFeedback: {
+      passengerName: 'Ananya Sharma',
+      passengerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      rating: 5,
+      comment: 'Super smooth EV ride from Bhubaneswar to Puri! Alex was very punctual and helpful with luggage.',
+      dateAgo: '2 days ago',
+    },
   },
   {
     id: 'ride-2',
@@ -42,6 +49,13 @@ let rides = [
     musicTaste: ['Lofi Beats', 'Jazz', 'R&B'],
     carbonSaved: 8.2,
     verifiedDriver: true,
+    recentFeedback: {
+      passengerName: 'Debasish Mohanty',
+      passengerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+      rating: 5,
+      comment: 'Sophia helped me reach Bhubaneswar during morning peak traffic! Safe driver & very polite.',
+      dateAgo: 'Yesterday',
+    },
   },
   {
     id: 'ride-3',
@@ -64,6 +78,13 @@ let rides = [
     musicTaste: ['Electronic', 'Classical', 'Alternative'],
     carbonSaved: 18.1,
     verifiedDriver: true,
+    recentFeedback: {
+      passengerName: 'Karan Das',
+      passengerAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+      rating: 4.9,
+      comment: 'Awesome bike ride! Marcus is super disciplined and brought an extra helmet.',
+      dateAgo: '3 days ago',
+    },
   },
 ];
 

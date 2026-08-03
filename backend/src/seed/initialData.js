@@ -5,19 +5,40 @@ const seedUsers = [
     name: 'Alex Mercer',
     email: 'alex.mercer@lift.example',
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    profile: { rating: 4.9, verifiedDriver: true },
+    profile: {
+      rating: 4.9,
+      verifiedDriver: true,
+      vehicleNumber: 'OD 02 EV 9999',
+      vehicleModel: 'Tesla Model 3 (EV)',
+      vehicleFrontUrl: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=600&auto=format&fit=crop&q=80',
+      vehicleRearUrl: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=600&auto=format&fit=crop&q=80',
+      ownerSelfieUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
+    },
   },
   {
     name: 'Sophia Patel',
     email: 'sophia.patel@lift.example',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    profile: { rating: 4.8, verifiedDriver: true },
+    profile: {
+      rating: 4.8,
+      verifiedDriver: true,
+      vehicleNumber: 'OD 05 AB 1234',
+      vehicleModel: 'Hyundai Creta',
+      vehicleFrontUrl: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&auto=format&fit=crop&q=80',
+      vehicleRearUrl: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=600&auto=format&fit=crop&q=80',
+      ownerSelfieUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
+    },
   },
   {
     name: 'Marcus Vance',
     email: 'marcus.vance@lift.example',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    profile: { rating: 4.7, verifiedDriver: true },
+    profile: {
+      rating: 4.7,
+      verifiedDriver: true,
+      vehicleNumber: 'OD 07 RE 3500',
+      vehicleModel: 'Royal Enfield Classic 350',
+    },
   },
 ];
 
@@ -89,6 +110,13 @@ export async function seedInitialData() {
       musicTaste: ['Indie Rock', 'Synthwave', 'Ambient'],
       carbonSaved: 14.5,
       verifiedDriver: true,
+      recentFeedback: {
+        passengerName: 'Ananya Sharma',
+        passengerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+        rating: 5,
+        comment: 'Super smooth EV ride from Bhubaneswar to Puri! Alex was very punctual and helpful with luggage.',
+        dateAgo: '2 days ago',
+      },
     },
     {
       driver: usersByEmail.get('sophia.patel@lift.example')._id,
@@ -113,6 +141,13 @@ export async function seedInitialData() {
       musicTaste: ['Lofi Beats', 'Jazz', 'R&B'],
       carbonSaved: 8.2,
       verifiedDriver: true,
+      recentFeedback: {
+        passengerName: 'Debasish Mohanty',
+        passengerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+        rating: 5,
+        comment: 'Sophia helped me reach Bhubaneswar during morning peak traffic! Safe driver & very polite.',
+        dateAgo: 'Yesterday',
+      },
     },
     {
       driver: usersByEmail.get('marcus.vance@lift.example')._id,
@@ -137,6 +172,13 @@ export async function seedInitialData() {
       musicTaste: ['Electronic', 'Classical', 'Alternative'],
       carbonSaved: 18.1,
       verifiedDriver: true,
+      recentFeedback: {
+        passengerName: 'Karan Das',
+        passengerAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+        rating: 4.9,
+        comment: 'Awesome bike ride! Marcus is super disciplined and brought an extra helmet.',
+        dateAgo: '3 days ago',
+      },
     },
     {
       driver: usersByEmail.get('alex.mercer@lift.example')._id,

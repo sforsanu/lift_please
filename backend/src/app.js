@@ -6,6 +6,9 @@ import morgan from 'morgan';
 import authRouter from './routes/auth.routes.js';
 import ridesRouter from './routes/rides.routes.js';
 import statsRouter from './routes/stats.routes.js';
+import deliveryRouter from './routes/delivery.routes.js';
+import freelancerRouter from './routes/freelancer.routes.js';
+import notificationRouter from './routes/notification.routes.js';
 import { notFound, errorHandler } from './middleware/error.middleware.js';
 
 export function createApp() {
@@ -24,6 +27,9 @@ export function createApp() {
   app.use('/api/auth', authRouter);
   app.use('/api/rides', ridesRouter);
   app.use('/api/carbon-stats', statsRouter);
+  app.use('/api/deliveries', deliveryRouter);
+  app.use('/api/freelancers', freelancerRouter);
+  app.use('/api/notifications', notificationRouter);
 
   app.use(notFound);
   app.use(errorHandler);

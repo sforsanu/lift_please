@@ -179,6 +179,13 @@ const rideSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    recentFeedback: {
+      passengerName: { type: String, trim: true },
+      passengerAvatar: { type: String, trim: true },
+      rating: { type: Number, default: 5 },
+      comment: { type: String, trim: true },
+      dateAgo: { type: String, trim: true },
+    },
     deliveryAvailable: {
       type: Boolean,
       default: false,
