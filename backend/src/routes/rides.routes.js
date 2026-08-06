@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { Message, Ride, RideRequest } from '../models/index.js';
+import { Notification } from '../models/Notification.js';
 import { verifyGooglePlaceLocation } from '../services/googlePlaces.js';
 import { searchRides } from '../services/rideSearch.js';
 import { httpError } from '../utils/httpError.js';
@@ -367,6 +368,148 @@ router.post('/:id/messages', authenticate, async (req, res, next) => {
       sender: isDriver ? 'driver' : 'user',
       text: userMessage.text,
       timestamp: userMessage.createdAt.toISOString(),
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// GET /api/rides/:id/live-location - Fetch real-time rider location and trip status
+router.get('/:id/live-location', authenticate, async (req, res, next) => {
+  try {
+    const ride = await Ride.findById(req.params.id);
+    if (!ride) {
+      throw httpError(404, 'Ride not found');
+    }
+
+    const isDriver = ride.driver.equals(req.user._id);
+
+    return res.json({
+      rideId: ride._id.toString(),
+      isDriver,
+      status: ride.status || 'ACTIVE',
+      currentLocation: ride.currentLocation || {
+        latitude: ride.pickupLocation?.latitude || 20.2961,
+        longitude: ride.pickupLocation?.longitude || 85.8245,
+        updatedAt: ride.updatedAt,
+      },
+      pickupLocation: ride.pickupLocation,
+      destinationLocation: ride.destinationLocation,
+      leavingFrom: ride.leavingFrom,
+      goingTo: ride.goingTo,
+      driverName: ride.driverName,
+      driverAvatar: ride.driverAvatar,
+      carModel: ride.carModel,
+      vehicleType: ride.vehicleType,
+      pickupPin: ride.pickupPin || '4819',
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// POST /api/rides/:id/verify-pickup-pin - Verify 4-digit PIN when rider meets client
+router.post('/:id/verify-pickup-pin', authenticate, async (req, res, next) => {
+  try {
+    const { pin } = req.body;
+    const ride = await Ride.findById(req.params.id);
+    if (!ride) {
+      throw httpError(404, 'Ride not found');
+    }
+
+    if (!ride.driver.equals(req.user._id)) {
+      throw httpError(403, 'Only the assigned rider/driver can verify pickup PIN');
+    }
+
+    const expectedPin = ride.pickupPin || '4819';
+    if (!pin || pin.toString().trim() !== expectedPin.toString().trim()) {
+      return res.status(400).json({ message: 'Incorrect Pickup PIN. Please check the 4-digit PIN on client screen.' });
+    }
+
+    ride.status = 'client_picked_up';
+    await ride.save();
+
+    // Notify client
+    const requests = await RideRequest.find({ ride: ride._id });
+    for (const reqItem of requests) {
+      await Notification.create({
+        user: reqItem.requester,
+        type: 'RIDE_REQUEST',
+        title: '🔑 Pickup PIN Verified!',
+        message: `Your rider ${ride.driverName} has verified your Pickup PIN! Live GPS tracking is active.`,
+        ride: ride._id,
+        request: reqItem._id,
+      });
+    }
+
+    return res.json({
+      success: true,
+      status: ride.status,
+      message: 'Pickup PIN verified! Client picked up & in transit.',
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// PATCH /api/rides/:id/live-location - Update live rider GPS position & trip status
+router.patch('/:id/live-location', authenticate, async (req, res, next) => {
+  try {
+    const { latitude, longitude, status } = req.body;
+    const ride = await Ride.findById(req.params.id);
+    if (!ride) {
+      throw httpError(404, 'Ride not found');
+    }
+
+    if (!ride.driver.equals(req.user._id)) {
+      throw httpError(403, 'Only the assigned rider/driver can update live location');
+    }
+
+    if (latitude !== undefined && longitude !== undefined) {
+      ride.currentLocation = {
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        updatedAt: new Date(),
+      };
+    }
+
+    if (status && ['ACTIVE', 'started', 'client_picked_up', 'completed', 'COMPLETED', 'CANCELLED'].includes(status)) {
+      const prevStatus = ride.status;
+      ride.status = status;
+
+      // Find requests for this ride to notify clients
+      const requests = await RideRequest.find({ ride: ride._id });
+
+      for (const reqItem of requests) {
+        if (status === 'client_picked_up' && prevStatus !== 'client_picked_up') {
+          await Notification.create({
+            user: reqItem.requester,
+            type: 'RIDE_REQUEST',
+            title: '🚕 Client Picked Up!',
+            message: `Your rider ${ride.driverName} has picked you up! Live GPS tracking is active for ${ride.goingTo}.`,
+            ride: ride._id,
+            request: reqItem._id,
+          });
+        } else if ((status === 'completed' || status === 'COMPLETED') && prevStatus !== 'completed' && prevStatus !== 'COMPLETED') {
+          await Notification.create({
+            user: reqItem.requester,
+            type: 'RIDE_COMPLETED',
+            title: '🏁 Trip Completed!',
+            message: `You have arrived safely at ${ride.goingTo}. Thank you for riding with Lift!`,
+            ride: ride._id,
+            request: reqItem._id,
+          });
+        }
+      }
+    }
+
+    await ride.save();
+
+    return res.json({
+      success: true,
+      rideId: ride._id.toString(),
+      status: ride.status,
+      currentLocation: ride.currentLocation,
     });
   } catch (error) {
     return next(error);

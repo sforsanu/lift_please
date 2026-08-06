@@ -41,6 +41,12 @@ export interface Ride {
   distanceInKm?: number;
   routeDistanceKm?: number;
   recentFeedback?: PassengerFeedback;
+  status?: string;
+  currentLocation?: {
+    latitude: number;
+    longitude: number;
+    updatedAt?: string;
+  };
 }
 
 export interface RideRequestInfo {

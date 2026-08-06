@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from './utils/api';
 import { AuthUser, LocationSelection, Ride } from './types';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -44,7 +45,7 @@ export default function App() {
     radiusKm?: number;
   }) => {
     try {
-      let url = '/api/rides';
+      let url = apiUrl('/api/rides');
       const hasFilters = Boolean(filters && (filters.pickupLocation || filters.destinationLocation || filters.date));
       if (filters && hasFilters) {
         const params = new URLSearchParams();
@@ -59,7 +60,7 @@ export default function App() {
         if (filters.date) params.append('date', filters.date);
         if (filters.seatsAvailable) params.append('seatsAvailable', String(filters.seatsAvailable));
         if (filters.radiusKm) params.append('radiusKm', String(filters.radiusKm));
-        url += `?${params.toString()}`;
+        url = apiUrl(`/api/rides?${params.toString()}`);
       }
 
       const res = await fetch(url, { credentials: 'include' });
@@ -79,7 +80,7 @@ export default function App() {
             // No exact matches found for specific date/coords!
             setIsExactMatchFound(false);
             // Fetch all active rides as fallback suggestions so UI is never empty
-            const fallbackRes = await fetch('/api/rides', { credentials: 'include' });
+            const fallbackRes = await fetch(apiUrl('/api/rides'), { credentials: 'include' });
             if (fallbackRes.ok) {
               const fallbackData = await fallbackRes.json();
               setRides(fallbackData);
@@ -99,7 +100,7 @@ export default function App() {
   const fetchUserRequests = async () => {
     if (!currentUser) return;
     try {
-      const res = await fetch('/api/rides/user-requests', { credentials: 'include' });
+      const res = await fetch(apiUrl('/api/rides/user-requests'), { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         const map: Record<string, 'PENDING' | 'ACCEPTED' | 'REJECTED'> = {};
@@ -125,7 +126,7 @@ export default function App() {
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        const res = await fetch(apiUrl('/api/auth/me'), { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setCurrentUser(data.user);
@@ -180,7 +181,7 @@ export default function App() {
     }
 
     try {
-      const res = await fetch(`/api/rides/${ride.id}/request`, {
+      const res = await fetch(apiUrl(`/api/rides/${ride.id}/request`), {
         method: 'POST',
         credentials: 'include',
       });
@@ -220,7 +221,7 @@ export default function App() {
       return;
     }
     try {
-      const res = await fetch('/api/rides', {
+      const res = await fetch(apiUrl('/api/rides'), {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -263,7 +264,7 @@ export default function App() {
   };
 
   const handleSignOut = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => undefined);
+    await fetch(apiUrl('/api/auth/logout'), { method: 'POST', credentials: 'include' }).catch(() => undefined);
     setCurrentUser(null);
     setActiveTab('home');
     setJoinedRideIds([]);
@@ -287,8 +288,9 @@ export default function App() {
     bio?: string;
     emergencyContact?: string;
   }) => {
-    const res = await fetch('/api/auth/profile', {
+    const res = await fetch(apiUrl('/api/auth/profile'), {
       method: 'PUT',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedData),
     });

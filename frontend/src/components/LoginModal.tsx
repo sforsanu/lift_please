@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { AlertCircle, ArrowRight, Car, Lock, Mail, Phone, User } from 'lucide-react';
 import { AuthUser } from '../types';
+import { apiUrl } from '../utils/api';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -19,7 +20,7 @@ export default function LoginModal({ onClose, onLoginSuccess }: LoginModalProps)
   const googleConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   const authenticate = async (url: string, body: Record<string, string>) => {
-    const res = await fetch(url, {
+    const res = await fetch(apiUrl(url), {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

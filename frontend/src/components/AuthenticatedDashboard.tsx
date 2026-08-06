@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
+import { apiUrl } from '../utils/api';
 import {
   Bell,
   Calendar,
@@ -12,6 +13,7 @@ import {
   MapPin,
   Menu,
   MessageSquare,
+  Navigation,
   Package,
   Plus,
   Search,
@@ -30,6 +32,7 @@ import CarbonDashboard from './CarbonDashboard';
 import EditProfileModal from './EditProfileModal';
 import PackageDeliverySection from './PackageDeliverySection';
 import FreelanceRidersSection from './FreelanceRidersSection';
+import LiveTrackingModal from './LiveTrackingModal';
 
 type DashboardView =
   | 'dashboard'
@@ -141,33 +144,86 @@ function StatCard({
   );
 }
 
-const RideMiniCard: FC<{ ride: Ride; onOpenChat: (ride: Ride) => void }> = ({ ride, onOpenChat }) => {
+const RideMiniCard: FC<{ ride: Ride; onOpenChat: (ride: Ride) => void; user: AuthUser }> = ({ ride, onOpenChat, user }) => {
+  const [isTrackOpen, setIsTrackOpen] = useState(false);
+
   return (
-    <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <img src={ride.driverAvatar} alt={ride.driverName} className="h-12 w-12 rounded-full object-cover border-2 border-blue-500/20" />
-          <div>
-            <p className="text-sm font-black text-slate-900">{ride.driverName}</p>
-            <p className="text-xs font-semibold text-slate-500">{ride.time} · {ride.carModel}</p>
+    <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+      <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <img src={ride.driverAvatar} alt={ride.driverName} className="h-12 w-12 rounded-full object-cover border-2 border-blue-500/20" />
+            <div>
+              <p className="text-sm font-black text-slate-900">{ride.driverName}</p>
+              <p className="text-xs font-semibold text-slate-500">{ride.time} · {ride.carModel}</p>
+            </div>
+          </div>
+          <div className="flex items-center text-xs font-extrabold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 flex-shrink-0">
+            <Star className="mr-1 h-3.5 w-3.5 fill-current text-amber-400" />
+            {ride.driverRating.toFixed(1)}
           </div>
         </div>
-        <div className="flex items-center text-xs font-extrabold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-          <Star className="mr-1 h-3.5 w-3.5 fill-current text-amber-400" />
-          {ride.driverRating.toFixed(1)}
+        <div className="mt-4 grid gap-2 rounded-2xl bg-slate-50 p-3.5 text-xs font-bold text-slate-700 border border-slate-100">
+          <span className="flex items-center gap-2 truncate"><MapPin className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />{ride.leavingFrom}</span>
+          <span className="flex items-center gap-2 truncate"><Flag className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />{ride.goingTo}</span>
         </div>
       </div>
-      <div className="mt-4 grid gap-2 rounded-2xl bg-slate-50 p-3.5 text-xs font-bold text-slate-700 border border-slate-100">
-        <span className="flex items-center gap-2 truncate"><MapPin className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />{ride.leavingFrom}</span>
-        <span className="flex items-center gap-2 truncate"><Flag className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />{ride.goingTo}</span>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button
+          onClick={() => setIsTrackOpen(true)}
+          className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-extrabold transition-all hover:bg-emerald-600 hover:text-white cursor-pointer shadow-2xs"
+          title="Track Rider Live GPS Location"
+        >
+          <Navigation className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+          <span>Track Live</span>
+        </button>
+
+        <button
+          onClick={() => onOpenChat(ride)}
+          className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-extrabold text-slate-700 transition-all hover:bg-blue-600 hover:text-white hover:border-blue-600 cursor-pointer"
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          <span>Open Chat</span>
+        </button>
       </div>
-      <button
-        onClick={() => onOpenChat(ride)}
-        className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-extrabold text-slate-700 transition-all hover:bg-blue-600 hover:text-white hover:border-blue-600 cursor-pointer"
-      >
-        <MessageSquare className="h-4 w-4" />
-        Open Secure Chat
-      </button>
+
+      {isTrackOpen && (
+        <LiveTrackingModal ride={ride} onClose={() => setIsTrackOpen(false)} currentUser={user} />
+      )}
+    </div>
+  );
+};
+
+const MyTripItem: FC<{ ride: Ride; onOpenChat: (ride: Ride) => void; user: AuthUser }> = ({ ride, onOpenChat, user }) => {
+  const [isTrackOpen, setIsTrackOpen] = useState(false);
+  return (
+    <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-extrabold mb-2">
+            {ride.date} · {ride.time}
+          </span>
+          <h3 className="text-lg font-black text-slate-900">{ride.leavingFrom} ➔ {ride.goingTo}</h3>
+          <p className="mt-1 text-xs font-semibold text-slate-500">Driver: {ride.driverName} · {ride.seatsAvailable} seats open</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsTrackOpen(true)}
+            className="h-11 inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-5 text-xs font-extrabold text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors cursor-pointer shadow-2xs"
+          >
+            <Navigation className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+            <span>Track Live</span>
+          </button>
+          <button onClick={() => onOpenChat(ride)} className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-5 text-xs font-extrabold text-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors cursor-pointer">
+            Open Secure Chat
+          </button>
+        </div>
+      </div>
+      {isTrackOpen && (
+        <LiveTrackingModal ride={ride} onClose={() => setIsTrackOpen(false)} currentUser={user} />
+      )}
     </div>
   );
 };
@@ -201,7 +257,7 @@ export default function AuthenticatedDashboard({
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch('/api/notifications', { credentials: 'include' });
+      const res = await fetch(apiUrl('/api/notifications'), { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setNotifications(data);
@@ -213,7 +269,7 @@ export default function AuthenticatedDashboard({
 
   const fetchUserConversations = async () => {
     try {
-      const res = await fetch('/api/rides/user-conversations', { credentials: 'include' });
+      const res = await fetch(apiUrl('/api/rides/user-conversations'), { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setUserConversations(data);
@@ -237,7 +293,7 @@ export default function AuthenticatedDashboard({
 
   const handleMarkAllRead = async () => {
     try {
-      await fetch('/api/notifications/read-all', { method: 'PATCH', credentials: 'include' });
+      await fetch(apiUrl('/api/notifications/read-all'), { method: 'PATCH', credentials: 'include' });
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch (err) {
       console.error('Error marking notifications as read:', err);
@@ -345,20 +401,7 @@ export default function AuthenticatedDashboard({
           <HeaderBlock title="My Trips" subtitle="Track rides you joined and routes you are offering." />
           <div className="grid gap-4">
             {upcomingRides.map((ride) => (
-              <div key={ride.id} className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-extrabold mb-2">
-                      {ride.date} · {ride.time}
-                    </span>
-                    <h3 className="text-lg font-black text-slate-900">{ride.leavingFrom} ➔ {ride.goingTo}</h3>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">Driver: {ride.driverName} · {ride.seatsAvailable} seats open</p>
-                  </div>
-                  <button onClick={() => onOpenChat(ride)} className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-6 text-xs font-extrabold text-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors cursor-pointer">
-                    Open Secure Chat
-                  </button>
-                </div>
-              </div>
+              <MyTripItem key={ride.id} ride={ride} onOpenChat={onOpenChat} user={user} />
             ))}
           </div>
         </div>
@@ -379,7 +422,7 @@ export default function AuthenticatedDashboard({
           )}
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {activeConversations.map((ride) => <RideMiniCard key={ride.id} ride={ride} onOpenChat={onOpenChat} />)}
+            {activeConversations.map((ride) => <RideMiniCard key={ride.id} ride={ride} onOpenChat={onOpenChat} user={user} />)}
           </div>
         </div>
       );
@@ -705,7 +748,7 @@ export default function AuthenticatedDashboard({
                             onClick={async () => {
                               if (!n.isRead) {
                                 try {
-                                  await fetch(`/api/notifications/${n.id}/read`, { method: 'PATCH', credentials: 'include' });
+                                  await fetch(apiUrl(`/api/notifications/${n.id}/read`), { method: 'PATCH', credentials: 'include' });
                                   setNotifications((prev) => prev.map((item) => (item.id === n.id ? { ...item, isRead: true } : item)));
                                 } catch (e) {}
                               }

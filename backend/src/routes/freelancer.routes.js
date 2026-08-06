@@ -255,6 +255,8 @@ router.post('/hire', authenticate, async (req, res, next) => {
     const timeStr = getValidTimeStr('08:00');
     const vType = parseVehicleType(freelancer.vehicleType);
 
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+
     // 1. Create Ride document in MongoDB
     const taskRide = await Ride.create({
       driver: freelancerUser._id,
@@ -286,6 +288,7 @@ router.post('/hire', authenticate, async (req, res, next) => {
       vehicleModel: freelancer.vehicleModel,
       interests: ['On-Demand Freelance Rider', title],
       carbonSaved: 2.5,
+      pickupPin: pin,
     });
 
     // 2. Create RideRequest document in MongoDB (status PENDING so freelancer must accept manually)
@@ -301,7 +304,7 @@ router.post('/hire', authenticate, async (req, res, next) => {
       ride: taskRide._id,
       sender: clientUser._id,
       recipient: freelancerUser._id,
-      text: `⚡ Task Hire Request: ${title}\n📍 Pickup: ${pickupAddr}\n🏁 Drop: ${dropAddr}\n💰 Offered Price: ₹${price}`,
+      text: `⚡ Task Hire Request: ${title}\n📍 Pickup: ${pickupAddr}\n🏁 Drop: ${dropAddr}\n💰 Offered Price: ₹${price}\n🔑 Pickup Verification PIN: ${pin}`,
     });
 
     // 4. Create Notification document in MongoDB for the freelancer

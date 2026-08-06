@@ -202,9 +202,13 @@ const rideSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['ACTIVE', 'COMPLETED', 'CANCELLED', 'scheduled', 'started', 'completed', 'cancelled'],
+      enum: ['ACTIVE', 'COMPLETED', 'CANCELLED', 'scheduled', 'started', 'client_picked_up', 'completed', 'cancelled'],
       default: 'ACTIVE',
       index: true,
+    },
+    pickupPin: {
+      type: String,
+      trim: true,
     },
     currentLocation: {
       latitude: Number,

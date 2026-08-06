@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Message, Ride, RideRequestInfo } from '../types';
-import { X, Send, ShieldCheck, Star, Clock, CheckCircle2, XCircle, SendHorizontal, Lock } from 'lucide-react';
+import { X, Send, ShieldCheck, Star, Clock, CheckCircle2, XCircle, SendHorizontal, Lock, Navigation } from 'lucide-react';
+import LiveTrackingModal from './LiveTrackingModal';
 
 interface ChatDrawerProps {
   ride: Ride;
@@ -15,6 +16,7 @@ export default function ChatDrawer({ ride, onClose }: ChatDrawerProps) {
   const [isDriver, setIsDriver] = useState(false);
   const [userRequestStatus, setUserRequestStatus] = useState<string | null>(null);
   const [driverRequests, setDriverRequests] = useState<RideRequestInfo[]>([]);
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const fetchRequestStatus = async () => {
@@ -151,13 +153,31 @@ export default function ChatDrawer({ ride, onClose }: ChatDrawerProps) {
             </div>
           </div>
         </div>
-        <button 
-          onClick={onClose} 
-          className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-all cursor-pointer"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsTrackingOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-2xs"
+            title="Track Live Rider GPS Location"
+          >
+            <Navigation className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+            <span className="hidden sm:inline">Track Live Location</span>
+          </button>
+          <button 
+            onClick={onClose} 
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-all cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
+
+      {isTrackingOpen && (
+        <LiveTrackingModal
+          ride={ride}
+          onClose={() => setIsTrackingOpen(false)}
+          currentUser={{ id: '', email: '', name: ride.driverName }}
+        />
+      )}
 
       {/* Driver Request Manager View */}
       {isDriver && driverRequests.length > 0 && (
