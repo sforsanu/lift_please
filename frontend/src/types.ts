@@ -139,10 +139,13 @@ export interface FreelanceRider {
   availableDate?: string; // YYYY-MM-DD or "Today"
   timeSlotFrom?: string;  // e.g. "09:00 AM"
   timeSlotTo?: string;    // e.g. "08:00 PM"
+  availableTimeSlot?: string;
   rating: number;
-  totalCompletedJobs: number;
+  totalCompletedJobs?: number;
+  completedTasks?: number;
   bio: string;
   verifiedDriver: boolean;
+  verifiedRider?: boolean;
 }
 
 export interface FreelanceTaskRequest {

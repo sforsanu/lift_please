@@ -339,17 +339,42 @@ export async function fetchCombinedLocationSuggestions(query: string): Promise<L
   return combined.slice(0, 10);
 }
 
-export function calculateDistanceKm(locA?: LocationSelection | null, locB?: LocationSelection | null): number {
-  if (!locA || !locB || typeof locA.latitude !== 'number' || typeof locB.latitude !== 'number') {
+export function calculateDistanceKm(
+  latAOrLocA?: number | LocationSelection | null,
+  lngAOrLocB?: number | LocationSelection | null,
+  latB?: number,
+  lngB?: number
+): number {
+  let lat1 = 0, lon1 = 0, lat2 = 0, lon2 = 0;
+
+  if (typeof latAOrLocA === 'object' && latAOrLocA !== null) {
+    lat1 = latAOrLocA.latitude;
+    lon1 = latAOrLocA.longitude;
+    if (typeof lngAOrLocB === 'object' && lngAOrLocB !== null) {
+      lat2 = lngAOrLocB.latitude;
+      lon2 = lngAOrLocB.longitude;
+    }
+  } else if (
+    typeof latAOrLocA === 'number' &&
+    typeof lngAOrLocB === 'number' &&
+    typeof latB === 'number' &&
+    typeof lngB === 'number'
+  ) {
+    lat1 = latAOrLocA;
+    lon1 = lngAOrLocB;
+    lat2 = latB;
+    lon2 = lngB;
+  } else {
     return 0;
   }
+
   const R = 6371; // Earth radius in km
-  const dLat = ((locB.latitude - locA.latitude) * Math.PI) / 180;
-  const dLon = ((locB.longitude - locA.longitude) * Math.PI) / 180;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((locA.latitude * Math.PI) / 180) *
-      Math.cos((locB.latitude * Math.PI) / 180) *
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));

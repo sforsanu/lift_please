@@ -1,5 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Package, MapPin, Flag, Plus, Send, Check, ShieldCheck, Sparkles, Truck, Search, Loader2, MessageSquare, IndianRupee, Clock, ArrowRight, User } from 'lucide-react';
+import {
+  Package,
+  MapPin,
+  Flag,
+  Plus,
+  Send,
+  Check,
+  ShieldCheck,
+  Sparkles,
+  Truck,
+  Search,
+  Loader2,
+  MessageSquare,
+  Clock,
+  ArrowRight,
+  User,
+  Filter,
+  CheckCircle2,
+  X,
+  AlertCircle,
+} from 'lucide-react';
 import type { LocationSelection, PackageDeliveryRequest, Ride, AuthUser } from '../types';
 import GooglePlacesInput from './GooglePlacesInput';
 
@@ -16,6 +36,7 @@ export default function PackageDeliverySection({ rides, currentUser, onOpenChat 
   const [isLoading, setIsLoading] = useState(true);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
+  const [activeTab, setActiveTab] = useState<'ALL' | 'ACTIVE' | 'HISTORY'>('ALL');
 
   // Form State for posting package request
   const [itemTitle, setItemTitle] = useState('');
@@ -95,8 +116,7 @@ export default function PackageDeliverySection({ rides, currentUser, onOpenChat 
       if (res.ok) {
         const updated = await res.json();
         setDeliveries(deliveries.map((d) => (d.id === delivery.id ? updated : d)));
-        
-        // Find matching ride or create dummy ride for chat drawer
+
         const matchRide: Ride = rides[0] || {
           id: `ride_delivery_${delivery.id}`,
           driverName: delivery.requesterName,
@@ -122,16 +142,9 @@ export default function PackageDeliverySection({ rides, currentUser, onOpenChat 
     }
   };
 
-  // Filter traveler rides matching route
-  const filteredRides = rides.filter((ride) => {
-    if (!pickupFilter && !dropFilter) return true;
-    const matchPickup = !pickupFilter || ride.leavingFrom.toLowerCase().includes(pickupFilter.address.toLowerCase().split(',')[0]);
-    const matchDrop = !dropFilter || ride.goingTo.toLowerCase().includes(dropFilter.address.toLowerCase().split(',')[0]);
-    return matchPickup && matchDrop;
-  });
-
-  // Filter package requests
   const filteredDeliveries = deliveries.filter((item) => {
+    if (activeTab === 'ACTIVE' && item.status !== 'IN_TRANSIT') return false;
+    if (activeTab === 'HISTORY' && item.status !== 'DELIVERED') return false;
     if (filterCategory !== 'ALL' && item.category !== filterCategory) return false;
     if (pickupFilter && !item.pickupAddress.toLowerCase().includes(pickupFilter.address.toLowerCase().split(',')[0])) return false;
     if (dropFilter && !item.dropAddress.toLowerCase().includes(dropFilter.address.toLowerCase().split(',')[0])) return false;
@@ -141,289 +154,252 @@ export default function PackageDeliverySection({ rides, currentUser, onOpenChat 
   return (
     <div className="space-y-7">
       {/* Header Banner */}
-      <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-8 text-white shadow-2xl backdrop-blur-xl flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative overflow-hidden">
+      <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 sm:p-8 text-white shadow-2xl backdrop-blur-xl flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-10 -translate-y-10 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-        
+
         <div className="space-y-2 relative z-10">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-extrabold">
             <Package className="h-3.5 w-3.5 text-blue-400" />
             Co-Courier Peer Parcel Carry
           </span>
-          <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">
-            Send Packages with Traveling Neighbors 📦
-          </h2>
-          <p className="text-xs sm:text-sm font-semibold text-slate-300 max-w-2xl leading-relaxed">
-            Need an item or document picked up from Bhubaneswar, Puri, or Cuttack? Co-travelers already heading on that route can carry your parcel for a quick reward tip.
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white md:text-4xl">Package Delivery</h1>
+          <p className="max-w-xl text-xs sm:text-sm font-semibold text-slate-300">
+            Send parcels with trusted commuters already traveling on your route. Zero extra emissions!
           </p>
         </div>
 
         <button
           onClick={() => setIsPostModalOpen(true)}
-          className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-7 text-xs font-extrabold text-white shadow-xl shadow-blue-600/30 transition-all active:scale-95 cursor-pointer border border-blue-400/30 whitespace-nowrap flex-shrink-0 relative z-10"
+          className="relative z-10 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-7 text-xs font-black shadow-xl shadow-blue-500/25 transition-all active:scale-95 cursor-pointer border border-blue-400/30"
         >
           <Plus className="h-4.5 w-4.5" />
-          <span>Post Package Request</span>
+          <span>Send a Package</span>
         </button>
       </div>
 
-      {/* Route Filter Bar */}
-      <div className="rounded-3xl border border-slate-200/90 bg-white/90 backdrop-blur-xl p-6 shadow-md grid gap-4 md:grid-cols-3 items-end">
-        <GooglePlacesInput
-          label="Pickup Location"
-          placeholder="Filter pickup city/area"
-          value={pickupFilter}
-          onChange={setPickupFilter}
-          icon={MapPin}
-          compact
-          required={false}
-        />
-        <GooglePlacesInput
-          label="Drop Location"
-          placeholder="Filter destination city/area"
-          value={dropFilter}
-          onChange={setDropFilter}
-          icon={Flag}
-          compact
-          required={false}
-        />
-        <div className="flex items-center gap-2">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-800 outline-none focus:border-blue-600 focus:bg-white"
-          >
-            <option value="ALL">All Categories</option>
-            <option value="Documents">📄 Documents</option>
-            <option value="Electronics">💻 Electronics</option>
-            <option value="Small Parcel">📦 Small Parcel</option>
-            <option value="Food/Grocery">🍱 Food & Sweets</option>
-            <option value="Heavy Item">📦 Heavy Item</option>
-          </select>
-          {(pickupFilter || dropFilter || filterCategory !== 'ALL') && (
+      {/* Tabs & Filters */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-1.5 bg-slate-200/80 p-1.5 rounded-2xl max-w-fit text-xs font-extrabold">
+          {[
+            { id: 'ALL', label: 'All Requests' },
+            { id: 'ACTIVE', label: 'Active Deliveries' },
+            { id: 'HISTORY', label: 'Completed History' },
+          ].map((tab) => (
             <button
-              onClick={() => {
-                setPickupFilter(null);
-                setDropFilter(null);
-                setFilterCategory('ALL');
-              }}
-              className="h-11 px-4 text-xs font-extrabold text-slate-500 hover:text-slate-900 border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
+                activeTab === tab.id
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
             >
-              Clear
+              {tab.label}
             </button>
-          )}
+          ))}
+        </div>
+
+        {/* Category Filters */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
+            <Filter className="h-3.5 w-3.5" /> Category:
+          </span>
+          {['ALL', 'Documents', 'Electronics', 'Small Parcel', 'Food/Grocery'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilterCategory(cat)}
+              className={`px-3 py-1 rounded-full text-xs font-extrabold border transition-all cursor-pointer ${
+                filterCategory === cat
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Main Grid: Traveling Co-Couriers + Open Package Requests */}
-      <div className="grid gap-7 lg:grid-cols-[1fr_1.1fr]">
-        
-        {/* Section A: Active Travelers Heading Your Way */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Truck className="h-5 w-5 text-blue-600" />
-              Travelers Passing This Route
-            </h3>
-            <span className="text-xs font-extrabold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
-              {filteredRides.length} Available
-            </span>
+      {/* Package Request Cards Grid */}
+      {isLoading ? (
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-64 rounded-3xl shimmer-bg border border-slate-200" />
+          ))}
+        </div>
+      ) : filteredDeliveries.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center space-y-4">
+          <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+            📦
           </div>
-
-          <div className="space-y-3.5">
-            {filteredRides.slice(0, 4).map((ride) => (
-              <div key={ride.id} className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm hover:shadow-md transition-all space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img src={ride.driverAvatar} alt={ride.driverName} className="h-11 w-11 rounded-xl object-cover border border-blue-500/30" />
-                    <div>
-                      <h4 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
-                        {ride.driverName}
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                      </h4>
-                      <p className="text-[11px] font-semibold text-slate-500">{ride.carModel} · {ride.time}</p>
-                    </div>
+          <div>
+            <h3 className="text-lg font-black text-slate-900">No package requests found</h3>
+            <p className="text-xs font-semibold text-slate-500 mt-1 max-w-md mx-auto">
+              Be the first to request a package carry or try selecting a different category filter.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsPostModalOpen(true)}
+            className="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-6 text-xs font-bold shadow-md cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Send a Package Now</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredDeliveries.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+            >
+              <div>
+                {/* Header: Title & Status */}
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-extrabold uppercase tracking-wider mb-1">
+                      {item.category}
+                    </span>
+                    <h3 className="text-base font-black text-slate-900">{item.itemTitle}</h3>
                   </div>
-                  <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-                    Can Carry Parcel
+
+                  <span
+                    className={`px-3 py-1 rounded-full text-[11px] font-extrabold border shadow-2xs flex-shrink-0 ${
+                      item.status === 'DELIVERED'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : item.status === 'IN_TRANSIT'
+                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}
+                  >
+                    {item.status === 'DELIVERED' ? '✓ Delivered' : item.status === 'IN_TRANSIT' ? '🚚 In Transit' : 'Pending Rider'}
                   </span>
                 </div>
 
-                <div className="rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-700 space-y-1.5 border border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Route:</span>
-                    <span className="text-slate-900">{ride.leavingFrom} ➔ {ride.goingTo}</span>
+                {/* Pickup & Drop Addresses */}
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 mb-4 text-xs font-bold text-slate-800">
+                  <div className="flex items-center gap-2 truncate">
+                    <MapPin className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                    <span className="truncate">{item.pickupAddress}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Vehicle Space:</span>
-                    <span className="text-blue-600">{ride.seatsAvailable} seats / boot space open</span>
+                  <div className="flex items-center gap-2 truncate">
+                    <Flag className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                    <span className="truncate">{item.dropAddress}</span>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => onOpenChat(ride)}
-                  className="w-full h-10 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-extrabold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  <span>Request Co-Courier Carry</span>
-                </button>
+                {/* Specs: Reward & Weight */}
+                <div className="flex items-center justify-between text-xs font-extrabold mb-4 p-3 rounded-2xl bg-slate-900 text-white">
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider">Reward Offered</p>
+                    <p className="text-lg font-black text-emerald-400">₹{item.offeredReward}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider">Weight Class</p>
+                    <p className="text-xs font-bold text-slate-200">{item.weightClass}</p>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Section B: Open Package Delivery Requests Feed */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Package className="h-5 w-5 text-emerald-600" />
-              Open Parcel Delivery Listings
-            </h3>
-            <span className="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-              {filteredDeliveries.length} Requests
-            </span>
-          </div>
-
-          {isLoading ? (
-            <div className="p-12 text-center text-slate-400 flex flex-col items-center">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-              <p className="text-xs font-bold">Loading parcel delivery listings...</p>
-            </div>
-          ) : filteredDeliveries.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center space-y-3">
-              <Package className="h-10 w-10 text-slate-300 mx-auto" />
-              <h4 className="text-base font-black text-slate-800">No open parcel requests match filter</h4>
-              <p className="text-xs text-slate-500 font-semibold">Post a request or clear filter criteria to view all parcel listings.</p>
-            </div>
-          ) : (
-            <div className="space-y-3.5">
-              {filteredDeliveries.map((item) => (
-                <div key={item.id} className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm hover:shadow-md transition-all space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold border border-blue-200">
-                          {item.category}
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
-                          {item.weightClass}
-                        </span>
-                      </div>
-                      <h4 className="text-base font-black text-slate-900 mt-2">{item.itemTitle}</h4>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl font-black text-emerald-600 flex items-center justify-end">
-                        ₹{item.offeredReward}
-                      </p>
-                      <p className="text-[10px] font-bold text-slate-400">Offered Tip</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-700 space-y-1.5 border border-slate-100">
-                    <p className="flex items-center gap-2 text-slate-800 truncate">
-                      <MapPin className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
-                      <span>Pickup: <strong className="text-slate-900">{item.pickupAddress}</strong></span>
-                    </p>
-                    <p className="flex items-center gap-2 text-slate-800 truncate">
-                      <Flag className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
-                      <span>Drop: <strong className="text-slate-900">{item.dropAddress}</strong></span>
-                    </p>
-                    {item.notes && <p className="text-slate-500 italic text-[11px] pt-1">"{item.notes}"</p>}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                      {item.requesterAvatar ? (
-                        <img src={item.requesterAvatar} alt={item.requesterName} className="h-6 w-6 rounded-full object-cover" />
-                      ) : (
-                        <div className="h-6 w-6 rounded-full bg-blue-600 text-white text-[10px] font-black flex items-center justify-center">{item.requesterName[0]}</div>
-                      )}
-                      <span>Posted by {item.requesterName}</span>
-                    </div>
-
-                    {item.status === 'ACCEPTED' ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                        <Check className="h-3.5 w-3.5" /> Matched with Traveler
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleAcceptDelivery(item)}
-                        className="h-9 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer border border-emerald-400/30 flex items-center gap-1.5"
-                      >
-                        <Send className="h-3.5 w-3.5" />
-                        <span>Accept & Carry Parcel</span>
-                      </button>
-                    )}
+              {/* Requester & Action */}
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={item.requesterAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}
+                    alt={item.requesterName}
+                    className="h-8 w-8 rounded-full object-cover border border-blue-500/30"
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">{item.requesterName}</p>
+                    <p className="text-[10px] font-semibold text-slate-400">Sender</p>
                   </div>
                 </div>
-              ))}
+
+                {item.status === 'OPEN' && (
+                  <button
+                    onClick={() => handleAcceptDelivery(item)}
+                    className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold transition-all shadow-md shadow-blue-500/20 flex items-center space-x-1 cursor-pointer active:scale-95"
+                  >
+                    <Truck className="h-3.5 w-3.5" />
+                    <span>Carry Parcel</span>
+                  </button>
+                )}
+              </div>
             </div>
-          )}
+          ))}
         </div>
+      )}
 
-      </div>
-
-      {/* Post Package Delivery Request Modal */}
+      {/* Modal: Send Package Request */}
       {isPostModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl overflow-y-auto">
-          <div className="relative w-full max-w-xl bg-slate-950 text-white rounded-3xl shadow-2xl border border-slate-800/90 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 px-6 py-6 text-white border-b border-slate-800">
-              <div className="flex items-center space-x-3">
-                <div className="p-2.5 bg-blue-600/30 border border-blue-500/40 rounded-2xl text-blue-400">
-                  <Package className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-white">Post Package Delivery Request</h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5">Match with traveling commuters to carry your parcel.</p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative my-auto max-h-[92vh] overflow-y-auto">
+            <button
+              onClick={() => setIsPostModalOpen(false)}
+              className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-md">
+                <Package className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900">Request Package Carry</h3>
+                <p className="text-xs font-semibold text-slate-500">Connect with co-travelers already on route</p>
               </div>
             </div>
 
-            <form onSubmit={handlePostSubmit} className="p-6 space-y-5">
-              {successMsg && (
-                <div className="p-3.5 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-xs font-extrabold text-emerald-300 flex items-center gap-2">
-                  <Check className="h-4 w-4" /> {successMsg}
-                </div>
-              )}
+            {successMsg && (
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span>{successMsg}</span>
+              </div>
+            )}
 
+            <form onSubmit={handlePostSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
-                  Item Title / Description
+                <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                  Item Description / Title
                 </label>
                 <input
                   type="text"
                   required
+                  placeholder="e.g. Important Legal Documents or Laptop Charger"
                   value={itemTitle}
                   onChange={(e) => setItemTitle(e.target.value)}
-                  placeholder="e.g. Legal Contract Envelope, Laptop Charger, Food Box"
-                  className="w-full h-12 px-4 bg-slate-900 border border-slate-800 rounded-xl text-sm font-bold text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                  className="block w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
+                  <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">
                     Category
                   </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as any)}
-                    className="w-full h-12 px-3 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-white outline-none focus:border-blue-500"
+                    className="block w-full h-12 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-600 cursor-pointer"
                   >
-                    <option value="Documents">📄 Documents</option>
-                    <option value="Electronics">💻 Electronics</option>
-                    <option value="Small Parcel">📦 Small Parcel</option>
-                    <option value="Food/Grocery">🍱 Food & Sweets</option>
-                    <option value="Heavy Item">📦 Heavy Item</option>
+                    <option value="Documents">Documents</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Small Parcel">Small Parcel</option>
+                    <option value="Heavy Item">Heavy Item</option>
+                    <option value="Food/Grocery">Food/Grocery</option>
                   </select>
                 </div>
+
                 <div>
-                  <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
+                  <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">
                     Weight Class
                   </label>
                   <select
                     value={weightClass}
                     onChange={(e) => setWeightClass(e.target.value as any)}
-                    className="w-full h-12 px-3 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-white outline-none focus:border-blue-500"
+                    className="block w-full h-12 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-600 cursor-pointer"
                   >
                     <option value="Under 1 kg">Under 1 kg</option>
                     <option value="1 - 5 kg">1 - 5 kg</option>
@@ -433,28 +409,27 @@ export default function PackageDeliverySection({ rides, currentUser, onOpenChat 
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <GooglePlacesInput
-                  label="Pickup Address"
-                  placeholder="Enter pickup location / landmark"
-                  value={pickupAddress}
-                  onChange={setPickupAddress}
-                  icon={MapPin}
-                  compact
-                />
-                <GooglePlacesInput
-                  label="Drop Address"
-                  placeholder="Enter drop location / landmark"
-                  value={dropAddress}
-                  onChange={setDropAddress}
-                  icon={Flag}
-                  compact
-                />
-              </div>
+              <GooglePlacesInput
+                label="Pickup Address"
+                placeholder="Choose pickup address from Google"
+                value={pickupAddress}
+                onChange={setPickupAddress}
+                icon={MapPin}
+                required={true}
+              />
+
+              <GooglePlacesInput
+                label="Drop Off Address"
+                placeholder="Choose destination address from Google"
+                value={dropAddress}
+                onChange={setDropAddress}
+                icon={Flag}
+                required={true}
+              />
 
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
-                  Offered Tip / Reward Amount (₹)
+                <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                  Offered Reward (₹)
                 </label>
                 <input
                   type="number"
@@ -462,46 +437,44 @@ export default function PackageDeliverySection({ rides, currentUser, onOpenChat 
                   min="50"
                   value={offeredReward}
                   onChange={(e) => setOfferedReward(e.target.value)}
-                  placeholder="200"
-                  className="w-full h-12 px-4 bg-slate-900 border border-slate-800 rounded-xl text-sm font-bold text-emerald-400 outline-none focus:border-emerald-500"
+                  className="block w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-blue-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-1.5">
-                  Notes for Traveler (Optional)
+                <label className="block text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">
+                  Special Instructions (Optional)
                 </label>
                 <textarea
                   rows={2}
+                  placeholder="e.g. Handle with care, call on arrival"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Handle with care, pick up before 5 PM from gate 2."
-                  className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs font-medium text-white placeholder-slate-500 outline-none focus:border-blue-500 resize-none"
+                  className="block w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:border-blue-600"
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsPostModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-800 text-xs font-extrabold text-slate-400 hover:bg-slate-900 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer flex items-center gap-2"
-                >
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  <span>Publish Delivery Request</span>
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-13 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:bg-slate-400 active:scale-95"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Publishing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    <span>Publish Package Carry Request</span>
+                  </>
+                )}
+              </button>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }

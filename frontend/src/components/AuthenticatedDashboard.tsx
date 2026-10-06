@@ -24,6 +24,8 @@ import {
   Wallet,
   X,
   Zap,
+  CheckCircle2,
+  Filter,
 } from 'lucide-react';
 import { AuthUser, LocationSelection, Ride, UserNotification } from '../types';
 import SearchForm from './SearchForm';
@@ -126,18 +128,18 @@ function StatCard({
   }[tone];
 
   return (
-    <div className={`rounded-3xl border border-slate-200/80 bg-white/90 backdrop-blur-md p-6 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${gradientBorder}`}>
+    <div className={`rounded-3xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${gradientBorder} flex flex-col justify-between`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400">{label}</p>
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">{label}</p>
           <p className="mt-2 text-3xl font-black text-slate-900 tracking-tight">{value}</p>
         </div>
-        <span className={`rounded-2xl border p-3.5 shadow-sm ${toneClass}`}>
+        <span className={`rounded-2xl border p-3 shadow-2xs ${toneClass}`}>
           <Icon className="h-6 w-6" />
         </span>
       </div>
-      <p className="mt-4 text-xs font-bold text-slate-500 flex items-center gap-1">
-        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+      <p className="mt-4 text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
         {detail}
       </p>
     </div>
@@ -152,13 +154,13 @@ const RideMiniCard: FC<{ ride: Ride; onOpenChat: (ride: Ride) => void; user: Aut
       <div>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <img src={ride.driverAvatar} alt={ride.driverName} className="h-12 w-12 rounded-full object-cover border-2 border-blue-500/20" />
+            <img src={ride.driverAvatar} alt={ride.driverName} className="h-12 w-12 rounded-2xl object-cover border-2 border-blue-500/20 shadow-2xs" />
             <div>
               <p className="text-sm font-black text-slate-900">{ride.driverName}</p>
               <p className="text-xs font-semibold text-slate-500">{ride.time} · {ride.carModel}</p>
             </div>
           </div>
-          <div className="flex items-center text-xs font-extrabold text-amber-500 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 flex-shrink-0">
+          <div className="flex items-center text-xs font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 flex-shrink-0">
             <Star className="mr-1 h-3.5 w-3.5 fill-current text-amber-400" />
             {ride.driverRating.toFixed(1)}
           </div>
@@ -246,6 +248,7 @@ export default function AuthenticatedDashboard({
   const [view, setView] = useState<DashboardView>('dashboard');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [tripTab, setTripTab] = useState<'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'>('UPCOMING');
   const initials = getInitials(user);
   const joinedRides = useMemo(() => rides.filter((ride) => joinedRideIds.includes(ride.id)), [rides, joinedRideIds]);
   const upcomingRides = joinedRides.length > 0 ? joinedRides : rides.slice(0, 2);
@@ -300,7 +303,6 @@ export default function AuthenticatedDashboard({
     }
   };
 
-  // Automatically switch to 'find' tab whenever search query info is updated
   useEffect(() => {
     if (searchQueryInfo) {
       setView('find');
@@ -310,6 +312,7 @@ export default function AuthenticatedDashboard({
   const selectView = (nextView: DashboardView) => {
     setView(nextView);
     setMobileNavOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSearchSubmit = async (filters: { pickupLocation: LocationSelection | null; destinationLocation: LocationSelection | null; date: string }) => {
@@ -351,7 +354,7 @@ export default function AuthenticatedDashboard({
             <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
               <div className="space-y-5">
                 <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/50 p-6 border border-blue-100">
-                  <p className="text-xs font-black uppercase tracking-wider text-blue-600">Quick Setup</p>
+                  <p className="text-xs font-black uppercase tracking-wider text-blue-600">Quick 5-Step Setup</p>
                   <h3 className="mt-2 text-2xl font-black text-slate-900">List your next commute in under a minute.</h3>
                   <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
                     Add route details, departure time, available seats, vehicle specs, and preference tags so co-travelers can find your trip easily.
@@ -362,7 +365,7 @@ export default function AuthenticatedDashboard({
                   className="inline-flex h-12 items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-7 text-sm font-black text-white shadow-xl shadow-blue-600/20 transition-all active:scale-95 cursor-pointer border border-blue-400/20"
                 >
                   <Plus className="h-4.5 w-4.5" />
-                  <span>Create Ride Listing</span>
+                  <span>Open 5-Step Ride Creator</span>
                 </button>
               </div>
               <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-6 flex flex-col justify-between">
@@ -399,10 +402,39 @@ export default function AuthenticatedDashboard({
       return (
         <div className="space-y-6">
           <HeaderBlock title="My Trips" subtitle="Track rides you joined and routes you are offering." />
-          <div className="grid gap-4">
-            {upcomingRides.map((ride) => (
-              <MyTripItem key={ride.id} ride={ride} onOpenChat={onOpenChat} user={user} />
+          
+          {/* Trip Status Tabs */}
+          <div className="flex items-center gap-1.5 bg-slate-200/80 p-1.5 rounded-2xl max-w-fit text-xs font-extrabold">
+            {[
+              { id: 'UPCOMING', label: 'Upcoming' },
+              { id: 'ACTIVE', label: 'Active' },
+              { id: 'COMPLETED', label: 'Completed' },
+              { id: 'CANCELLED', label: 'Cancelled' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setTripTab(tab.id as any)}
+                className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
+                  tripTab === tab.id
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {tab.label}
+              </button>
             ))}
+          </div>
+
+          <div className="grid gap-4">
+            {upcomingRides.length === 0 ? (
+              <div className="p-8 bg-white rounded-3xl border border-slate-200 text-center text-xs font-bold text-slate-500">
+                No trips found under this status tab.
+              </div>
+            ) : (
+              upcomingRides.map((ride) => (
+                <MyTripItem key={ride.id} ride={ride} onOpenChat={onOpenChat} user={user} />
+              ))
+            )}
           </div>
         </div>
       );
@@ -414,7 +446,7 @@ export default function AuthenticatedDashboard({
       return (
         <div className="space-y-6">
           <HeaderBlock title="Messages & Task Requests" subtitle="Encrypted conversations for freelancing tasks, route coordination, and price discussions." />
-          
+
           {userConversations.length === 0 && (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl text-xs font-semibold text-blue-800">
               ⚡ Showing community directory channels. Hire a freelance rider or request a ride pool to start direct encrypted messaging!
@@ -463,8 +495,8 @@ export default function AuthenticatedDashboard({
       return (
         <div className="space-y-6">
           <HeaderBlock title="Profile & Security Verification" subtitle="Manage identity, avatar photo, address verification, and vehicle registration." />
-          
-          <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-8 text-white shadow-2xl backdrop-blur-xl space-y-6">
+
+          <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 sm:p-8 text-white shadow-2xl backdrop-blur-xl space-y-6">
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-6">
               <div className="flex items-center gap-5">
                 {user.avatarUrl ? (
@@ -475,8 +507,7 @@ export default function AuthenticatedDashboard({
                 <div>
                   <h3 className="text-2xl font-black text-white">{user.name || 'Lift Rider'}</h3>
                   <p className="text-sm font-semibold text-slate-400">{user.email}</p>
-                  
-                  {/* Security Verification Badges */}
+
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3 py-0.5 text-xs font-extrabold text-emerald-300">
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
@@ -508,7 +539,7 @@ export default function AuthenticatedDashboard({
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => setIsEditProfileOpen(true)}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-7 text-xs font-extrabold shadow-xl shadow-blue-600/30 transition-all active:scale-95 cursor-pointer border border-blue-400/30"
               >
@@ -517,7 +548,6 @@ export default function AuthenticatedDashboard({
               </button>
             </div>
 
-            {/* Profile Security Details Grid */}
             <div className="grid gap-6 md:grid-cols-2">
               <div className="p-6 bg-slate-900/90 rounded-2xl border border-slate-800/90 space-y-3 shadow-md">
                 <h4 className="text-xs font-extrabold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
@@ -542,7 +572,6 @@ export default function AuthenticatedDashboard({
                   <p><span className="text-slate-400 font-medium">Bio Tagline:</span> {user.profile?.bio || 'Daily commuter'}</p>
                 </div>
 
-                {/* Verification Photos Preview */}
                 <div className="pt-3.5 border-t border-slate-800 space-y-2.5">
                   <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
                     Verification Photos (Front, Rear, Owner Selfie)
@@ -596,7 +625,6 @@ export default function AuthenticatedDashboard({
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       );
@@ -605,17 +633,17 @@ export default function AuthenticatedDashboard({
     return (
       <div className="space-y-7">
         <HeaderBlock title={`Welcome back, ${user.name?.split(' ')[0] || 'Rider'} 👋`} subtitle="Your Lift ride-sharing command center is live." />
-        
-        {/* Stat Cards Grid */}
+
+        {/* Responsive Stats Grid */}
         <div className="grid gap-5 md:grid-cols-3">
-          <StatCard label="Upcoming trips" value={String(upcomingRides.length)} detail="Matched ride pools" icon={Calendar} tone="blue" />
-          <StatCard label="CO2 offset" value={`${savedKg.toFixed(1)} kg`} detail="From commute activity" icon={Leaf} tone="green" />
-          <StatCard label="Eco Rewards" value="1,240" detail="Active community points" icon={Wallet} tone="gold" />
+          <StatCard label="UPCOMING TRIPS" value={String(upcomingRides.length)} detail="Matched ride pools" icon={Calendar} tone="blue" />
+          <StatCard label="CO2 OFFSET" value={`${savedKg.toFixed(1)} kg`} detail="From commute activity" icon={Leaf} tone="green" />
+          <StatCard label="ECO REWARDS" value="1,240" detail="Active community points" icon={Wallet} tone="gold" />
         </div>
 
         {/* Recommended rides & Quick actions */}
         <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-7 shadow-sm">
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-black text-slate-900 tracking-tight">Recommended Matching Pools</h3>
@@ -626,11 +654,11 @@ export default function AuthenticatedDashboard({
               </button>
             </div>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {rides.slice(0, 2).map((ride) => <RideMiniCard key={ride.id} ride={ride} onOpenChat={onOpenChat} />)}
+              {rides.slice(0, 2).map((ride) => <RideMiniCard key={ride.id} ride={ride} onOpenChat={onOpenChat} user={user} />)}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-7 shadow-sm">
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-sm">
             <h3 className="text-xl font-black text-slate-900 tracking-tight">Quick Actions</h3>
             <p className="text-xs font-semibold text-slate-400 mt-0.5">Shortcuts for daily commuting</p>
 
@@ -666,17 +694,27 @@ export default function AuthenticatedDashboard({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Sleek Glass Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-slate-800 bg-slate-950 px-5 py-5 lg:flex lg:flex-col justify-between shadow-2xl overflow-y-auto max-h-screen">
+    <div className="min-h-screen bg-slate-50 text-slate-900 has-bottom-nav">
+      {/* Persistent Dark Navy Sidebar for Desktop (>=1024px) */}
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-slate-800/80 bg-slate-950 px-5 py-6 lg:flex lg:flex-col justify-between shadow-2xl overflow-y-auto max-h-screen">
         <DashboardNav view={view} onSelect={selectView} user={user} initials={initials} onSignOut={onSignOut} />
       </aside>
 
+      {/* Mobile Slide-Out Drawer (<1024px) */}
       {mobileNavOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md lg:hidden">
-          <div className="h-full w-80 max-w-[86vw] bg-slate-950 px-5 py-5 shadow-2xl border-r border-slate-800 overflow-y-auto flex flex-col justify-between">
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md lg:hidden animate-fade-in"
+          onClick={() => setMobileNavOpen(false)}
+        >
+          <div
+            className="h-full w-80 max-w-[85vw] bg-slate-950 px-5 py-6 shadow-2xl border-r border-slate-800 overflow-y-auto flex flex-col justify-between"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-2 flex justify-end">
-              <button onClick={() => setMobileNavOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-900">
+              <button
+                onClick={() => setMobileNavOpen(false)}
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-900 hover:text-white transition-colors cursor-pointer"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -685,18 +723,28 @@ export default function AuthenticatedDashboard({
         </div>
       )}
 
+      {/* Main Content Viewport */}
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl shadow-xs">
+        {/* Sticky Top Header */}
+        <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-2xs">
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-            <button onClick={() => setMobileNavOpen(true)} className="rounded-xl border border-slate-200 p-2 text-slate-600 lg:hidden">
-              <Menu className="h-5 w-5" />
-            </button>
-            <div className="hidden items-center gap-2 lg:flex">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1 text-xs font-extrabold text-emerald-600">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Live Command Center
-              </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileNavOpen(true)}
+                className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 lg:hidden cursor-pointer"
+                aria-label="Open mobile menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1 text-xs font-extrabold text-emerald-600">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Live Command Center
+                </span>
+              </div>
             </div>
+
+            {/* Right Controls: Notifications & Profile */}
             <div className="flex items-center gap-3">
               <div className="relative">
                 <button
@@ -785,9 +833,13 @@ export default function AuthenticatedDashboard({
                   </div>
                 )}
               </div>
-              <button onClick={() => setView('profile')} className="flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-50 py-1 pl-1.5 pr-4 hover:border-blue-500 transition-colors">
+
+              <button
+                onClick={() => setView('profile')}
+                className="flex items-center gap-2.5 rounded-full border border-slate-200/80 bg-slate-50 py-1 pl-1.5 pr-4 hover:border-blue-500 transition-colors cursor-pointer"
+              >
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name || 'User Avatar'} className="h-8 w-8 rounded-full object-cover border border-blue-500/40 shadow-xs" />
+                  <img src={user.avatarUrl} alt={user.name || 'User Avatar'} className="h-8 w-8 rounded-full object-cover border border-blue-500/40 shadow-2xs" />
                 ) : (
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-black text-white">{initials}</span>
                 )}
@@ -796,7 +848,65 @@ export default function AuthenticatedDashboard({
             </div>
           </div>
         </header>
+
+        {/* Dynamic View Container */}
         <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{renderView()}</main>
+      </div>
+
+      {/* Mobile Bottom Navigation Bar (<1024px) */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-2xl lg:hidden">
+        <div className="grid grid-cols-5 items-center h-16 px-2">
+          <button
+            onClick={() => selectView('dashboard')}
+            className={`flex flex-col items-center justify-center py-1 transition-colors cursor-pointer ${
+              view === 'dashboard' ? 'text-blue-600 font-extrabold' : 'text-slate-400 hover:text-slate-700 font-medium'
+            }`}
+          >
+            <Car className="h-5 w-5" />
+            <span className="text-[10px] mt-1">Home</span>
+          </button>
+
+          <button
+            onClick={() => selectView('find')}
+            className={`flex flex-col items-center justify-center py-1 transition-colors cursor-pointer ${
+              view === 'find' ? 'text-blue-600 font-extrabold' : 'text-slate-400 hover:text-slate-700 font-medium'
+            }`}
+          >
+            <Search className="h-5 w-5" />
+            <span className="text-[10px] mt-1">Find</span>
+          </button>
+
+          {/* Central Action Plus Button */}
+          <div className="flex justify-center -mt-5">
+            <button
+              onClick={onOfferRideClick}
+              className="h-13 w-13 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/40 border-4 border-slate-50 transition-transform active:scale-90 cursor-pointer"
+              title="Offer a Ride"
+            >
+              <Plus className="h-6 w-6 stroke-[3]" />
+            </button>
+          </div>
+
+          <button
+            onClick={() => selectView('delivery')}
+            className={`flex flex-col items-center justify-center py-1 transition-colors cursor-pointer ${
+              view === 'delivery' ? 'text-blue-600 font-extrabold' : 'text-slate-400 hover:text-slate-700 font-medium'
+            }`}
+          >
+            <Package className="h-5 w-5" />
+            <span className="text-[10px] mt-1">Delivery</span>
+          </button>
+
+          <button
+            onClick={() => selectView('profile')}
+            className={`flex flex-col items-center justify-center py-1 transition-colors cursor-pointer ${
+              view === 'profile' ? 'text-blue-600 font-extrabold' : 'text-slate-400 hover:text-slate-700 font-medium'
+            }`}
+          >
+            <User className="h-5 w-5" />
+            <span className="text-[10px] mt-1">Profile</span>
+          </button>
+        </div>
       </div>
 
       <EditProfileModal
@@ -812,7 +922,7 @@ export default function AuthenticatedDashboard({
 function HeaderBlock({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div>
-      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Lift Ride-Sharing Dashboard</p>
+      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-600">Lift Green Mobility Dashboard</p>
       <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">{title}</h1>
       <p className="mt-1 max-w-2xl text-xs sm:text-sm font-semibold text-slate-500">{subtitle}</p>
     </div>
@@ -835,16 +945,18 @@ function DashboardNav({
   return (
     <div className="flex h-full flex-col text-white justify-between">
       <div>
+        {/* Logo */}
         <div className="flex items-center gap-3 px-2">
           <div className="rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-2.5 text-white shadow-lg shadow-blue-500/20">
             <Car className="h-6 w-6" />
           </div>
           <div>
             <p className="text-2xl font-black tracking-tight text-white">Lift</p>
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-blue-400">Green Mobility</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Green Mobility</p>
           </div>
         </div>
 
+        {/* Sidebar Nav Links */}
         <nav className="mt-6 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -853,13 +965,13 @@ function DashboardNav({
               <button
                 key={item.id}
                 onClick={() => onSelect(item.id)}
-                className={`flex h-10 w-full items-center gap-3 rounded-xl px-3.5 text-xs font-extrabold transition-all cursor-pointer ${
-                  active 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25 border border-blue-400/30' 
+                className={`flex h-11 w-full items-center gap-3 rounded-xl px-3.5 text-xs font-extrabold transition-all cursor-pointer ${
+                  active
+                    ? 'bg-blue-600/20 text-white border-l-4 border-blue-500 font-black shadow-xs'
                     : 'text-slate-400 hover:bg-slate-900 hover:text-white'
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className={`h-4 w-4 ${active ? 'text-blue-400' : 'text-slate-400'}`} />
                 {item.label}
               </button>
             );
@@ -867,11 +979,12 @@ function DashboardNav({
         </nav>
       </div>
 
+      {/* User Profile Footer Card */}
       <div className="mt-6 pt-4 border-t border-slate-900">
         <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-3.5 space-y-3">
           <div className="flex items-center gap-3">
             {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name || 'User Avatar'} className="h-9 w-9 rounded-xl object-cover border border-blue-500/40 shadow-sm flex-shrink-0" />
+              <img src={user.avatarUrl} alt={user.name || 'User Avatar'} className="h-9 w-9 rounded-xl object-cover border border-blue-500/40 shadow-xs flex-shrink-0" />
             ) : (
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-black text-white shadow-md flex-shrink-0">{initials}</div>
             )}
