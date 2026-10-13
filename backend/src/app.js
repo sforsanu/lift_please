@@ -14,8 +14,25 @@ import { notFound, errorHandler } from './middleware/error.middleware.js';
 export function createApp() {
   const app = express();
 
+  const isDev = process.env.NODE_ENV !== 'production';
+  const configuredOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+    .split(',')
+    .map((u) => u.trim());
+
   app.use(helmet());
-  app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (configuredOrigins.includes(origin)) return callback(null, true);
+        if (isDev && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error('CORS not allowed for origin: ' + origin));
+      },
+      credentials: true,
+    }),
+  );
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
   app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));

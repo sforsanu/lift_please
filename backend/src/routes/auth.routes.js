@@ -119,6 +119,77 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const normalizedEmail = String(req.body.email || '').trim().toLowerCase();
+
+    if (!isValidEmail(normalizedEmail)) {
+      throw httpError(400, 'A valid email address is required');
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      throw httpError(404, 'No account found with this email address');
+    }
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetPasswordCode = resetCode;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    res.json({
+      message: 'Verification code generated successfully',
+      email: normalizedEmail,
+      resetCode,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/reset-password', async (req, res, next) => {
+  try {
+    const normalizedEmail = String(req.body.email || '').trim().toLowerCase();
+    const { code, newPassword } = req.body;
+
+    if (!isValidEmail(normalizedEmail)) {
+      throw httpError(400, 'A valid email address is required');
+    }
+
+    if (!code || !String(code).trim()) {
+      throw httpError(400, 'Verification code is required');
+    }
+
+    if (!validatePassword(newPassword)) {
+      throw httpError(400, 'New password must be at least 8 characters');
+    }
+
+    const user = await User.findOne({ email: normalizedEmail }).select('+resetPasswordCode +resetPasswordExpires');
+    if (!user) {
+      throw httpError(404, 'User not found');
+    }
+
+    const trimmedCode = String(code).trim();
+    if (
+      !user.resetPasswordCode ||
+      user.resetPasswordCode !== trimmedCode ||
+      !user.resetPasswordExpires ||
+      new Date(user.resetPasswordExpires).getTime() < Date.now()
+    ) {
+      throw httpError(400, 'Invalid or expired verification code');
+    }
+
+    await user.setPassword(newPassword);
+    user.resetPasswordCode = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/google', async (req, res, next) => {
   try {
     const { credential } = req.body;

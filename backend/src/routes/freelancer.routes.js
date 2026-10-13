@@ -163,7 +163,7 @@ router.post('/toggle-availability', authenticate, (req, res) => {
     (r) => String(r.userId) === userId || r.name.toLowerCase() === userName.toLowerCase()
   );
 
-  const { isAvailableToday, serviceZone, vehicleType, baseRatePerTrip, perKmRate, isNegotiable, availableDate, timeSlotFrom, timeSlotTo } = req.body;
+  const { isAvailableToday, serviceZone, vehicleType, baseRatePerTrip, perKmRate, isNegotiable, availableDate, timeSlotFrom, timeSlotTo, bio } = req.body;
 
   if (rider) {
     rider.userId = userId;
@@ -178,6 +178,7 @@ router.post('/toggle-availability', authenticate, (req, res) => {
     if (availableDate) rider.availableDate = availableDate;
     if (timeSlotFrom) rider.timeSlotFrom = timeSlotFrom;
     if (timeSlotTo) rider.timeSlotTo = timeSlotTo;
+    if (bio !== undefined) rider.bio = bio;
   } else {
     rider = {
       id: `free_${Date.now()}`,
@@ -199,7 +200,7 @@ router.post('/toggle-availability', authenticate, (req, res) => {
       timeSlotTo: timeSlotTo || '08:00 PM',
       rating: 5.0,
       totalCompletedJobs: 1,
-      bio: req.user.profile?.bio || 'Freelance rider available for on-demand tasks today.',
+      bio: bio || req.user.profile?.bio || 'Freelance rider available for on-demand tasks today.',
       verifiedDriver: Boolean(req.user.profile?.verifiedDriver || req.user.profile?.vehicleNumber),
     };
     freelanceRiders.unshift(rider);
